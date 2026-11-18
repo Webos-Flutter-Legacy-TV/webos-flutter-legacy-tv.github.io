@@ -256,7 +256,13 @@ flutter-webos build webos --release --legacy</code></pre>
         <h3>Check other releases</h3>
         <p>Without the right TV, you can still check which libraries and functions a build needs that a firmware is missing:</p>
 <pre><code>tools/fw-compat-check.py --db &lt;fw-symbols data dir&gt; build/webos/arm/release/bundle/lib/*.so</code></pre>
-        <p>The symbol data comes from webosbrew's firmware inventory. The check can't see kernel, Wayland protocol or GPU driver behaviour, so real TVs still have the final word.</p>
+        <p>The symbol data comes from webosbrew's
+          <a href="https://github.com/webosbrew/dev-toolbox-cli/releases">dev-toolbox-cli releases</a>
+          (<code>webosbrew-toolbox-fw-symbols_*.deb</code>; unpack it with <code>dpkg-deb -x</code>, the data is under <code>usr/share/webosbrew/compat-checker/data</code>).
+          Add <code>--require 5</code> to make it fail unless every release from webOS&nbsp;5 on passes; the
+          <em>Firmware compatibility</em> workflow does this for every test app on each pull request.
+          The check can't see kernel, Wayland protocol or GPU driver behaviour, so real TVs still have the final word.</p>
+        <p>The packager also checks each legacy package's structure (loader, library paths, shims) with <code>tools/check-compat-ipk.py</code>; a build stops with a list of problems if something is off.</p>
       </li>
 
       <li id="pr">

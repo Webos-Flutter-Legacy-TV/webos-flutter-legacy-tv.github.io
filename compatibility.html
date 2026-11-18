@@ -32,7 +32,7 @@
           <tr><td>22&ndash;25 (7.4&ndash;10.2)</td><td><span class="pill warn">Expected to work</span></td><td>Nothing</td><td>16.4 / 17.1</td></tr>
           <tr><td>6 (6.4)</td><td><span class="pill ok">Verified on 6.5.3</span></td><td>Nothing</td><td>16.3</td></tr>
           <tr><td>5 (5.3.1)</td><td><span class="pill warn">Likely works</span></td><td>Nothing (<code>NDL_MediaSetPlayer</code> shimmed: one player at a time)</td><td>15.1</td></tr>
-          <tr><td>4 (4.4.2, 4.10)</td><td><span class="pill warn">Opt-in, untested</span></td><td>Nothing when packaged with <code>COMPAT_WEBOS4=1</code> (bundles libsystemd, a curl forwarder and the <code>wl_webos_foreign</code> protocol). No video placement. <a href="https://github.com/Webos-Flutter-Legacy-TV/flutter-webos/issues/2">Needs a TV report</a></td><td>&ndash; / 14.0</td></tr>
+          <tr><td>4 (4.4.2, 4.10)</td><td><span class="pill warn">Opt-in, untested</span></td><td>Nothing when packaged with <code>COMPAT_WEBOS4=1</code> (bundles libsystemd, libopus where a plugin uses it, a curl forwarder and the <code>wl_webos_foreign</code> protocol). CI checks every test app against this firmware on each change. No video placement. <a href="https://github.com/Webos-Flutter-Legacy-TV/flutter-webos/issues/2">Needs a TV report</a></td><td>&ndash; / 14.0</td></tr>
           <tr><td>3 (3.4, 3.9)</td><td><span class="pill no">Much more work</span></td><td>As webOS 4, plus older Luna C++, i18n and pbnjson APIs; no libudev or libwebp</td><td>&ndash;</td></tr>
           <tr><td>1&ndash;2</td><td><span class="pill no">Highest risk</span></td><td>As webOS 3, plus no Luna C++ library</td><td>&ndash;</td></tr>
         </tbody>
