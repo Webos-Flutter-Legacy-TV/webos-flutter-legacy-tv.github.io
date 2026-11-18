@@ -35,31 +35,50 @@
     <ol class="steps">
       <li id="install">
         <h3>Install the tools</h3>
-        <p>On a Linux x86_64 machine with <code>curl</code>, <code>xz</code>, <code>dpkg-deb</code>, <code>python3</code>, <code>npm</code> and <code>cmake</code>:</p>
+        <p>On Ubuntu (22.04, 24.04 or 26.04; WSL2 works) install the system packages and <strong>Node.js 20 or newer</strong>
+          (details in <a href="development.html#host">Development, step&nbsp;1</a>):</p>
+<pre><code>sudo apt-get install -y git git-lfs curl unzip xz-utils file pkg-config cmake ninja-build clang \
+  libgtk-3-dev python3 python3-venv openssh-client
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash &amp;&amp; . ~/.nvm/nvm.sh &amp;&amp; nvm install 22</code></pre>
+        <p>Then get the SDK and its toolchains. They go into git-ignored folders inside the clone:</p>
 <pre><code>git clone https://github.com/Webos-Flutter-Legacy-TV/flutter-webos.git
 cd flutter-webos/legacy-webos
 WEBOS_NDK_ACCEPT_EULA=1 ./setup.sh     <span class="c"># accepts the LG SDK License Agreement for the NDK</span>
-. ./env.sh                             <span class="c"># in each new shell</span></code></pre>
-        <p>Nothing is installed system-wide. The <a href="development.html#setup">development guide</a> explains each download.</p>
+. ./env.sh                             <span class="c"># in each new shell</span>
+flutter-webos doctor -v                <span class="c"># "Flutter" and "webOS toolchain" must show [✓]</span></code></pre>
       </li>
       <li id="build">
         <h3>Build</h3>
-<pre><code>cd my_app
+<pre><code>cd my_app                              <span class="c"># an app created with flutter-webos create --platforms webos</span>
 flutter-webos build webos --release --legacy</code></pre>
         <div class="table"><table>
           <thead><tr><th>Package</th><th>For</th></tr></thead>
           <tbody>
-            <tr><td><code>build/webos/arm/release/*.ipk</code></td><td>webOS 26 (LG's unchanged build)</td></tr>
-            <tr><td><code>build/webos-compat/release/&lt;id&gt;_&lt;version&gt;_arm.ipk</code></td><td>Older webOS</td></tr>
+            <tr><td><code>build/webos/arm/release/ipk/&lt;id&gt;_&lt;version&gt;_arm.ipk</code></td><td>webOS 26 (LG's unchanged build)</td></tr>
+            <tr><td><code>build/webos-compat/release/&lt;id&gt;_&lt;version&gt;_arm.ipk</code></td><td>webOS 5&ndash;25</td></tr>
           </tbody>
         </table></div>
+        <p style="margin-top:12px"><strong>webOS 4</strong> (opt-in, not yet tested on a TV): build with
+          <code>COMPAT_WEBOS4=1 flutter-webos build webos --release --legacy</code>. That package is for webOS 4&ndash;6 only, and video placement
+          doesn't work on webOS 4. See <a href="compatibility.html#releases">compatibility</a>.</p>
         <p style="margin-top:12px"><code>--legacy</code> needs the default <code>arm</code> target, because older TVs run 32-bit software. To repackage an existing build without rebuilding:</p>
-<pre><code>../flutter-webos/legacy-webos/tools/make-compat-ipk.sh . release</code></pre>
+<pre><code>&lt;path to flutter-webos&gt;/legacy-webos/tools/make-compat-ipk.sh . release</code></pre>
       </li>
       <li id="configure">
         <h3>Configure</h3>
-        <p>Turn on Impeller in <code>webos/meta/flutter-conf.json</code>. It is two to three times faster than Skia on the webOS 6 GPU:</p>
-<pre><code>{ "engine-switches": { "enable-impeller": true } }</code></pre>
+        <p>Turn on Impeller: add <code>"engine-switches"</code> to <code>webos/meta/flutter-conf.json</code>, keeping the keys
+          <code>flutter-webos create</code> put there. Impeller is up to three times faster than Skia on the webOS 6 GPU.</p>
+<pre><code>{
+  "FLUTTER_HOME": "",
+  "FLUTTER_TEMP_HOME": ".cache",
+  "FLUTTER_APPDATA_HOME": ".data",
+  "FLUTTER_DOWNLOAD_HOME": ".download",
+  "FLUTTER_EXT_STORAGE_PATH": "",
+  "FLUTTER_APP_LOG_PATH": "log",
+  "engine-switches": {
+    "enable-impeller": true
+  }
+}</code></pre>
         <p>Optional switches, each an empty file in <code>webos/meta/</code>:</p>
         <div class="table"><table>
           <thead><tr><th>File</th><th>Effect</th></tr></thead>
@@ -73,18 +92,23 @@ flutter-webos build webos --release --legacy</code></pre>
       </li>
       <li id="plugins">
         <h3>Plugins</h3>
-        <p>Use the <a href="https://github.com/Webos-Flutter-Legacy-TV/plugins">plugins fork</a> for these. Each has fixes found while porting:</p>
+        <p>LG's webOS plugins aren't endorsed implementations, so an app depends on both the plugin itself and its webOS
+          implementation. Take the webOS side from the <a href="https://github.com/Webos-Flutter-Legacy-TV/plugins">plugins fork</a>,
+          pinned to a release tag:</p>
 <pre><code>dependencies:
-  video_player_webos:
+  video_player: ^2.9.0                  <span class="c"># the plugin your Dart code imports</span>
+  video_player_webos:                   <span class="c"># its webOS implementation, from the fork</span>
     git:
       url: https://github.com/Webos-Flutter-Legacy-TV/plugins.git
-      ref: main
+      ref: legacy-v0.1.0
       path: packages/video_player</code></pre>
+        <p>Your code keeps <code>import 'package:video_player/video_player.dart';</code>. Each package's folder name and package name
+          are listed in the plugins repo's <code>doc/plugin-list.md</code>; the fork's fixes are in these:</p>
         <div class="table"><table>
           <thead><tr><th>Plugin</th><th>Why the fork</th></tr></thead>
           <tbody>
             <tr><td>video_player</td><td>Looping, lifecycle events, volume; keeps a moved or resized video visible</td></tr>
-            <tr><td>video_player_drm</td><td>Error handling</td></tr>
+            <tr><td>video_player_drm</td><td>Stops position polling once the player is gone</td></tr>
             <tr><td>audioplayers_soloud</td><td>Resume after completion; seek never hangs</td></tr>
             <tr><td>flutter_secure_storage</td><td>webOS 6 has no usable key service; encrypts in the app sandbox</td></tr>
             <tr><td>webos_service_bridge</td><td>Subscription cancel errors</td></tr>
@@ -94,9 +118,10 @@ flutter-webos build webos --release --legacy</code></pre>
       </li>
       <li id="install-tv">
         <h3>Install on the TV</h3>
-        <p>With the TV in <a href="development.html#tv">Developer Mode</a>:</p>
+        <p>With the TV in Developer Mode and registered as <code>tv</code> (<a href="development.html#tv">how</a>):</p>
 <pre><code>ares-install --device tv build/webos-compat/release/*.ipk
-ares-launch  --device tv &lt;app-id&gt;</code></pre>
+ares-launch  --device tv &lt;app-id&gt;        <span class="c"># the "id" in webos/meta/appinfo.json</span></code></pre>
+        <div class="note warn">Use the <code>webos-compat</code> package. <code>flutter-webos run</code> installs the webOS&nbsp;26 package, which doesn't start on older TVs.</div>
       </li>
       <li id="check">
         <h3>Check it works</h3>
@@ -106,7 +131,8 @@ ares-launch  --device tv &lt;app-id&gt;</code></pre>
           <li>Network, storage and each plugin the app uses.</li>
           <li>Video: play, pause, seek, and the DRM type the app uses.</li>
         </ul>
-        <p>If the app doesn't start, read <code>/media/developer/apps/usr/palm/applications/&lt;id&gt;/compat.log</code>. It has the app's output and the shims' messages.</p>
+        <p>If the app doesn't start, read <code>/media/developer/apps/usr/palm/applications/&lt;id&gt;/compat.log</code> on the TV.
+          It has the app's output and the shims' messages. <a href="development.html#logs">How to read it with Developer Mode</a>.</p>
       </li>
     </ol>
 

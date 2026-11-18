@@ -87,8 +87,9 @@
       </table>
     </div>
     <div class="grid two" style="margin-top:22px">
-      <div class="card"><h3>Turn on Impeller</h3><p>In <code>webos/meta/flutter-conf.json</code>:</p>
-<pre><code>{ "engine-switches": { "enable-impeller": true } }</code></pre>
+      <div class="card"><h3>Turn on Impeller</h3><p>Add this key to <code>webos/meta/flutter-conf.json</code>, next to the keys already there
+        (<a href="get-started.html#configure">full file</a>):</p>
+<pre><code>"engine-switches": { "enable-impeller": true }</code></pre>
         <p>Recommended, including for apps that use video_player with the plugins fork.</p></div>
       <div class="card"><h3>Dual surface (opt-in)</h3><p>An empty <code>webos/meta/compat-dual-surface</code> file alternates two EGL surfaces, so rendering no longer waits about 10&nbsp;ms
         per frame for the Mali driver. Raster time drops from about 17&nbsp;ms to 7&nbsp;ms.</p>

@@ -44,11 +44,18 @@
     <ol class="steps">
       <li id="host">
         <h3>Host machine</h3>
-        <p>A <strong>Linux x86_64</strong> machine: Ubuntu 22.04 or newer, Debian 12 or newer, or similar. WSL2 on Windows works for building.
-          Leave about 15&nbsp;GB of free disk space for the toolchains and builds.</p>
-<pre><code><span class="c"># Debian / Ubuntu</span>
-sudo apt install git curl xz-utils dpkg-dev python3 python3-venv nodejs npm cmake build-essential openssh-client</code></pre>
-        <p>That is the only step that installs anything system-wide. Everything else goes into git-ignored folders inside the clone.</p>
+        <p>A <strong>Linux x86_64</strong> machine running Ubuntu 22.04, 24.04 or 26.04 (the releases LG supports; other distributions
+          may work). On Windows or macOS, use WSL2 or a Docker dev container with Ubuntu. Leave about 15&nbsp;GB of free disk space.</p>
+<pre><code>sudo apt-get update
+sudo apt-get install -y git git-lfs curl unzip xz-utils file pkg-config cmake ninja-build clang \
+  libgtk-3-dev python3 python3-venv openssh-client</code></pre>
+        <p><strong>Node.js 20 or newer</strong> is also needed, for the webOS CLI (<code>ares</code> 3.2.6). Ubuntu's own
+          <code>nodejs</code> package is too old on 22.04 and 24.04, so install it with <a href="https://github.com/nvm-sh/nvm">nvm</a>:</p>
+<pre><code>curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+. ~/.nvm/nvm.sh
+nvm install 22
+node --version                         <span class="c"># v22.x</span></code></pre>
+        <p>These are the only system-wide installs. Everything else goes into git-ignored folders inside the clone.</p>
       </li>
 
       <li id="fork">
@@ -93,20 +100,30 @@ WEBOS_NDK_ACCEPT_EULA=1 ./setup.sh</code></pre>
 
       <li id="verify">
         <h3>Check the setup</h3>
-<pre><code>command -v flutter-webos ares-install patchelf
-ls legacy-webos/compat/*/out/          <span class="c"># the shims setup.sh built</span>
-flutter-webos --version                <span class="c"># first run builds the CLI snapshot (a minute or two)</span></code></pre>
-        <p>All three commands should resolve and the <code>out/</code> folders should contain <code>.so</code> files.</p>
+<pre><code>cd ~/webos-dev/flutter-webos/legacy-webos
+command -v flutter-webos ares-install patchelf   <span class="c"># all three should print a path</span>
+ls compat/*/out/                       <span class="c"># the shims setup.sh built (.so files)</span>
+flutter-webos --version                <span class="c"># first run sets up the CLI (a minute or two)</span>
+flutter-webos doctor -v                <span class="c"># "Flutter" and "webOS toolchain" must show [✓]</span>
+flutter-webos precache                 <span class="c"># optional: download the engine binaries now</span></code></pre>
+        <p>Other doctor items (Android, Chrome, Android Studio) aren't needed and can be ignored.</p>
       </li>
 
       <li id="first">
         <h3>Build a first app</h3>
 <pre><code>cd ~/webos-dev
-flutter-webos create hello_tv
+flutter-webos create --platforms webos hello_tv
 cd hello_tv
 flutter-webos build webos --release --legacy</code></pre>
-        <p>You get two packages: <code>build/webos/arm/release/*.ipk</code> for webOS&nbsp;26, and
-          <code>build/webos-compat/release/&lt;app-id&gt;_&lt;version&gt;_arm.ipk</code> for older webOS.</p>
+        <p>You get two packages:</p>
+        <div class="table"><table>
+          <thead><tr><th>Package</th><th>For</th></tr></thead>
+          <tbody>
+            <tr><td><code>build/webos/arm/release/ipk/&lt;app-id&gt;_&lt;version&gt;_arm.ipk</code></td><td>webOS 26</td></tr>
+            <tr><td><code>build/webos-compat/release/&lt;app-id&gt;_&lt;version&gt;_arm.ipk</code></td><td>webOS 5&ndash;25 (and webOS 4 with <code>COMPAT_WEBOS4=1</code>, see <a href="get-started.html#build">Get started</a>)</td></tr>
+          </tbody>
+        </table></div>
+        <p style="margin-top:12px">The app id is in <code>webos/meta/appinfo.json</code> (<code>com.flutter.app.hello-tv</code> for this example).</p>
       </li>
 
       <li id="tv">
@@ -130,28 +147,36 @@ flutter-webos build webos --release --legacy</code></pre>
           </div>
         </div>
         <p>For Developer Mode, register the TV with the CLI once:</p>
-<pre><code>ares-setup-device --add tv --info "{'host':'&lt;TV IP&gt;','port':'9922','username':'prisoner'}"
-ares-novacom --device tv --getkey      <span class="c"># enter the passphrase from the Developer Mode app</span>
-ares-device --device tv --system-info  <span class="c"># should print the TV's model and webOS version</span></code></pre>
+<pre><code>ares-setup-device -a tv -i "username=prisoner" -i "host=&lt;TV IP&gt;" -i "port=9922"
+ares-novacom --device tv --getkey      <span class="c"># Key Server must be on; saves ~/.ssh/tv_webos</span>
+ares-device --device tv --system-info  <span class="c"># prints the TV's model and webOS version</span></code></pre>
         <div class="note">The Developer Mode session expires after a while. Open the app on the TV and extend it before it runs out, or your installed test apps are removed.</div>
       </li>
 
       <li id="run">
         <h3>Install and run</h3>
-<pre><code><span class="c"># Developer Mode</span>
+<pre><code><span class="c"># Developer Mode (from ~/webos-dev/hello_tv)</span>
 ares-install --device tv build/webos-compat/release/*.ipk
-ares-launch  --device tv &lt;app-id&gt;
+ares-launch  --device tv com.flutter.app.hello-tv
 
 <span class="c"># Rooted TV</span>
 export TV_HOST=&lt;TV IP&gt;
 ../flutter-webos/legacy-webos/tools/tv-install.sh build/webos-compat/release/*.ipk --launch</code></pre>
         <p>The app should appear on the screen. Check that the remote's arrows, OK and Back work.</p>
+        <div class="note warn"><strong>Don't use <code>flutter-webos run</code> on an older TV.</strong> It builds and installs the
+          webOS&nbsp;26 package, which doesn't start there. Hot reload is therefore not available on older TVs; on webOS&nbsp;26, or with
+          <code>flutter-webos run -d linux</code> on your computer, it works as usual.</div>
       </li>
 
       <li id="logs">
         <h3>Logs and debug switches</h3>
         <p>Legacy builds write the app's stdout and stderr, plus the shims' messages, to <code>compat.log</code> next to the installed binary:</p>
 <pre><code>/media/developer/apps/usr/palm/applications/&lt;app-id&gt;/compat.log</code></pre>
+        <p>To read it with Developer Mode, use the SSH access the Developer Mode app provides (<code>ares-shell</code> and
+          <code>ares-pull</code> don't work with TVs). SSH asks for the key's passphrase, the one shown in the Developer Mode app:</p>
+<pre><code>ssh -i ~/.ssh/tv_webos -p 9922 -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa \
+  prisoner@&lt;TV IP&gt; cat /media/developer/apps/usr/palm/applications/com.flutter.app.hello-tv/compat.log</code></pre>
+        <p>On a rooted TV, use <code>ssh root@&lt;TV IP&gt;</code> with the same path.</p>
         <p>To turn on extra output, add an empty file to the app's <code>webos/meta/</code> folder and rebuild:</p>
         <div class="table"><table>
           <thead><tr><th>File</th><th>Logs</th></tr></thead>
@@ -184,8 +209,12 @@ export TV_HOST=&lt;TV IP&gt;
 <pre><code>cd legacy-webos/tests/plugins_test
 flutter-webos build webos --release
 cd ../.. &amp;&amp; TV_HOST=&lt;TV IP&gt; tools/dev-cycle.sh tests/plugins_test 120 --luna</code></pre>
-        <p>With Developer Mode, build with <code>--legacy</code>, install with <code>ares-install</code>, launch the app, then read the log with
-          <code>ares-shell</code> or from the app's own screen.</p>
+        <p>With Developer Mode, build with <code>--legacy</code>, install with <code>ares-install</code> and launch the app. Each test app
+          shows its results on screen; to copy them, read <code>compat_results.log</code> over SSH as in <a href="#logs">step&nbsp;9</a>.</p>
+        <p>For video tests that don't depend on third-party hosts, serve the media from your computer and build against it:</p>
+<pre><code>tools/media-server.sh                  <span class="c"># prints MEDIA_BASE=http://&lt;your IP&gt;:8099, keep it running</span>
+cd tests/video_test
+flutter-webos build webos --release --legacy --dart-define=MEDIA_BASE=http://&lt;your IP&gt;:8099</code></pre>
       </li>
 
       <li id="shims">
@@ -253,6 +282,9 @@ git push -u origin fix/short-description
           <tr><td><code>No bundle at .../build/webos/arm/release/bundle</code></td><td>Run <code>flutter-webos build webos --release</code> before <code>make-compat-ipk.sh</code> or <code>dev-cycle.sh</code>.</td></tr>
           <tr><td><code>webosbrew toolchain missing</code></td><td>Run <code>./setup.sh</code> again; the download may have been interrupted.</td></tr>
           <tr><td><code>flutter-webos</code> can't find the NDK</td><td>Re-run <code>setup.sh</code> with <code>WEBOS_NDK_ACCEPT_EULA=1</code>, then source <code>env.sh</code>.</td></tr>
+          <tr><td><code>setup.sh</code> stops at the webOS CLI step</td><td>Node.js is older than 20. Install a newer one with nvm (step&nbsp;1) and re-run.</td></tr>
+          <tr><td><code>ares-novacom --getkey</code> fails</td><td>Turn on <strong>Key Server</strong> in the Developer Mode app, and check the TV's IP address.</td></tr>
+          <tr><td>App installed with <code>flutter-webos run</code> doesn't start on an older TV</td><td>That's the webOS&nbsp;26 package. Install <code>build/webos-compat/...ipk</code> with <code>ares-install</code>.</td></tr>
           <tr><td><code>flutter-webos</code> shows old behaviour after a CLI change</td><td>The CLI snapshot is rebuilt only when git HEAD changes. Commit (or amend) to refresh it.</td></tr>
           <tr><td>App installs but exits at once</td><td>Read <code>compat.log</code>. A missing symbol there means a firmware difference: run the firmware check.</td></tr>
           <tr><td>Large install times out on a rooted TV</td><td><code>tv-install.sh</code> waits up to 180&nbsp;s; raise <code>TV_INSTALL_TIMEOUT</code> for very large apps.</td></tr>
