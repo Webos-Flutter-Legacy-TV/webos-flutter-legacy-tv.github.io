@@ -93,7 +93,7 @@
         <p>Recommended, including for apps that use video_player with the plugins fork.</p></div>
       <div class="card"><h3>Dual surface (opt-in)</h3><p>An empty <code>webos/meta/compat-dual-surface</code> file alternates two EGL surfaces, so rendering no longer waits about 10&nbsp;ms
         per frame for the Mali driver. Raster time drops from about 17&nbsp;ms to 7&nbsp;ms.</p>
-        <p style="margin-top:8px"><strong>Known issue:</strong> with Impeller, a change drawn just before the screen goes still can stay invisible. The cause hasn't been found yet.</p></div>
+        <p style="margin-top:8px">It switches itself off while video or audio is loaded, or while an external texture (such as a <code>webos_image_texture</code> image) is registered: with Impeller those don't draw on the second surface.</p></div>
     </div>
   </div>
 </section>
