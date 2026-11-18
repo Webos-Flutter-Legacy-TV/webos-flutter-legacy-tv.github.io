@@ -1,0 +1,35 @@
+# Checks every link on the site (pages link a lot into the repositories,
+# issues and upstream docs), weekly and on each change.
+name: Links
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "29 6 * * 1"   # Mondays 06:29 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lychee:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --no-progress
+            --include-fragments
+            --root-dir "${{ github.workspace }}"
+            --max-retries 3
+            --accept 200,206,429
+            --exclude '^https://webos-flutter-legacy-tv\.github\.io'
+            --exclude '^http://<'
+            '**/*.html' README.md
+          fail: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
