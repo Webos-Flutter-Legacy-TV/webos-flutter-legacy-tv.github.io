@@ -9,7 +9,7 @@
 
   var header = document.querySelector('header.top');
   if (header) {
-    header.innerHTML = '<div class="wrap"><a class="brand" href="index.html"><img src="assets/logo.svg" alt="">Webos Flutter Legacy TV</a>' +
+    header.innerHTML = '<div class="wrap"><a class="brand" href="index.html"><img src="assets/brand/org-logo-256.png" alt="">Webos Flutter Legacy TV</a>' +
       '<button class="menu-btn" aria-label="Menu" aria-expanded="false">Menu</button><nav class="nav">' +
       pages.map(function (p) { return '<a href="' + p[0] + '"' + (p[0] === here ? ' class="active" aria-current="page"' : '') + '>' + p[1] + '</a>'; }).join('') +
       '<a class="gh" href="' + GH + '">GitHub</a></nav></div>';
