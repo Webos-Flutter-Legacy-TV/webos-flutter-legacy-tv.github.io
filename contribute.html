@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contribute · Webos Flutter Legacy TV</title>
+<meta name="description" content="How to help: TV compatibility reports, bug reports, pull requests. Licences, privacy and code of conduct.">
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header class="top"></header>
+
+<div class="page-head">
+  <div class="wrap">
+    <div class="crumb"><a href="index.html">Home</a> / Contribute</div>
+    <h1>Contribute</h1>
+    <p>Everything so far has been tested on a single webOS&nbsp;6 TV. Help with other models and releases makes the biggest difference.</p>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <h2>Ways to help</h2>
+    <div class="grid">
+      <a class="card" href="https://github.com/Webos-Flutter-Legacy-TV/flutter-webos/issues/new?template=tv_compat_report.yml">
+        <div class="icon">&#128250;</div><h3>Report your TV</h3><p>Build a test app with <code>--legacy</code>, install it, and tell us what works on your model and webOS release.</p><span class="more">TV report form &rarr;</span></a>
+      <a class="card" href="https://github.com/Webos-Flutter-Legacy-TV/flutter-webos/issues/new/choose">
+        <div class="icon">&#128027;</div><h3>Report a bug</h3><p>Include a minimal app, the TV model and release, and <code>compat.log</code> with personal data removed.</p><span class="more">Open an issue &rarr;</span></a>
+      <a class="card" href="development.html">
+        <div class="icon">&#128295;</div><h3>Send a fix</h3><p>Set up a development machine, pick an open item, and send a pull request.</p><span class="more">Development setup &rarr;</span></a>
+    </div>
+  </div>
+</section>
+
+<section class="alt">
+  <div class="wrap">
+    <h2>Open work</h2>
+    <p class="sub">Good places to start. Each is described in more detail in the
+      <a href="https://github.com/Webos-Flutter-Legacy-TV/flutter-webos/blob/main/legacy-webos/README.md">legacy-webos README</a>.</p>
+    <div class="table"><table>
+      <thead><tr><th>Item</th><th>Needs</th></tr></thead>
+      <tbody>
+        <tr><td>Run the test apps on webOS 22&ndash;25 and webOS 5</td><td>A TV on that release</td></tr>
+        <tr><td>webOS 4: bundle libsystemd and libcurl, and shim <code>NDL_MediaMuteDisplay</code></td><td>Build work, then a webOS 4 TV</td></tr>
+        <tr><td>Dual surface: find why an image can stay invisible with Impeller</td><td>EGL/Wayland debugging</td></tr>
+        <tr><td>Frame pacing without dual surface: deliver vsync once a buffer is free</td><td>Shim work</td></tr>
+        <tr><td>audioplayers_soloud: correct position in loop mode</td><td>Plugin fix</td></tr>
+        <tr><td>Widevine with the v15 CDM interface (webOS 5)</td><td>CDM work, then a webOS 5 TV</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Ground rules</h2>
+    <div class="grid two">
+      <div class="card"><h3>Licences</h3><p>Most code is BSD-3-Clause, as LG released it. Some LG files carry other terms in their headers; keep those as they are.
+        New files use BSD-3-Clause. <strong>Never copy code from GPL projects.</strong> Reading them for ideas is fine.</p></div>
+      <div class="card"><h3>Privacy</h3><p>Never commit or paste personal data: TV IP addresses, serial numbers, MAC addresses, account names, tokens or keys. Check logs before attaching them.</p></div>
+      <div class="card"><h3>Testing</h3><p>Say exactly what ran on which TV and release. "Not tested on a TV" is a fine answer. Untested shim behaviour stays opt-in.</p></div>
+      <div class="card"><h3>Conduct</h3><p>Be respectful and constructive. Everyone taking part follows the
+        <a href="https://github.com/Webos-Flutter-Legacy-TV/.github/blob/main/CODE_OF_CONDUCT.md">Code of Conduct</a>.
+        Report security problems privately, as described in the <a href="https://github.com/Webos-Flutter-Legacy-TV/.github/blob/main/SECURITY.md">security policy</a>.</p></div>
+    </div>
+    <p style="margin-top:22px">Full details: <a href="https://github.com/Webos-Flutter-Legacy-TV/.github/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>.</p>
+  </div>
+</section>
+
+<footer></footer>
+<script src="assets/site.js"></script>
+</body>
+</html>

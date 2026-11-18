@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Get started · Webos Flutter Legacy TV</title>
+<meta name="description" content="Build an existing flutter-webos app for older webOS TVs: setup, --legacy build, configuration, plugins and testing.">
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header class="top"></header>
+
+<div class="page-head">
+  <div class="wrap">
+    <div class="crumb"><a href="index.html">Home</a> / Get started</div>
+    <h1>Get started</h1>
+    <p>Take an app you build with flutter-webos and run it on an older TV. To work on the project itself, see <a href="development.html">Development</a>.</p>
+  </div>
+</div>
+
+<div class="wrap docs">
+  <nav class="toc" aria-label="On this page">
+    <div class="t">On this page</div>
+    <a href="#install">1. Install the tools</a>
+    <a href="#build">2. Build</a>
+    <a href="#configure">3. Configure</a>
+    <a href="#plugins">4. Plugins</a>
+    <a href="#install-tv">5. Install on the TV</a>
+    <a href="#check">6. Check it works</a>
+    <a href="#differences">What behaves differently</a>
+    <a href="#publish">Before publishing</a>
+  </nav>
+  <article>
+    <ol class="steps">
+      <li id="install">
+        <h3>Install the tools</h3>
+        <p>On a Linux x86_64 machine with <code>curl</code>, <code>xz</code>, <code>dpkg-deb</code>, <code>python3</code>, <code>npm</code> and <code>cmake</code>:</p>
+<pre><code>git clone https://github.com/Webos-Flutter-Legacy-TV/flutter-webos.git
+cd flutter-webos/legacy-webos
+WEBOS_NDK_ACCEPT_EULA=1 ./setup.sh     <span class="c"># accepts the LG SDK License Agreement for the NDK</span>
+. ./env.sh                             <span class="c"># in each new shell</span></code></pre>
+        <p>Nothing is installed system-wide. The <a href="development.html#setup">development guide</a> explains each download.</p>
+      </li>
+      <li id="build">
+        <h3>Build</h3>
+<pre><code>cd my_app
+flutter-webos build webos --release --legacy</code></pre>
+        <div class="table"><table>
+          <thead><tr><th>Package</th><th>For</th></tr></thead>
+          <tbody>
+            <tr><td><code>build/webos/arm/release/*.ipk</code></td><td>webOS 26 (LG's unchanged build)</td></tr>
+            <tr><td><code>build/webos-compat/release/&lt;id&gt;_&lt;version&gt;_arm.ipk</code></td><td>Older webOS</td></tr>
+          </tbody>
+        </table></div>
+        <p style="margin-top:12px"><code>--legacy</code> needs the default <code>arm</code> target, because older TVs run 32-bit software. To repackage an existing build without rebuilding:</p>
+<pre><code>../flutter-webos/legacy-webos/tools/make-compat-ipk.sh . release</code></pre>
+      </li>
+      <li id="configure">
+        <h3>Configure</h3>
+        <p>Turn on Impeller in <code>webos/meta/flutter-conf.json</code>. It is two to three times faster than Skia on the webOS 6 GPU:</p>
+<pre><code>{ "engine-switches": { "enable-impeller": true } }</code></pre>
+        <p>Optional switches, each an empty file in <code>webos/meta/</code>:</p>
+        <div class="table"><table>
+          <thead><tr><th>File</th><th>Effect</th></tr></thead>
+          <tbody>
+            <tr><td><code>compat-widevine-cdm</code></td><td>Widevine playback through the TV's own CDM (software security level)</td></tr>
+            <tr><td><code>compat-dual-surface</code></td><td>Faster frames; known issue with Impeller (see <a href="compatibility.html#performance">performance</a>)</td></tr>
+            <tr><td><code>compat-back-as-key</code></td><td>Deliver Back as a key event instead of a route pop</td></tr>
+            <tr><td><code>compat-log-*</code></td><td>Debug output in <code>compat.log</code> (see <a href="development.html#logs">logs</a>)</td></tr>
+          </tbody>
+        </table></div>
+      </li>
+      <li id="plugins">
+        <h3>Plugins</h3>
+        <p>Use the <a href="https://github.com/Webos-Flutter-Legacy-TV/plugins">plugins fork</a> for these. Each has fixes found while porting:</p>
+<pre><code>dependencies:
+  video_player_webos:
+    git:
+      url: https://github.com/Webos-Flutter-Legacy-TV/plugins.git
+      ref: main
+      path: packages/video_player</code></pre>
+        <div class="table"><table>
+          <thead><tr><th>Plugin</th><th>Why the fork</th></tr></thead>
+          <tbody>
+            <tr><td>video_player</td><td>Looping, lifecycle events, volume; keeps a moved or resized video visible</td></tr>
+            <tr><td>video_player_drm</td><td>Error handling</td></tr>
+            <tr><td>audioplayers_soloud</td><td>Resume after completion; seek never hangs</td></tr>
+            <tr><td>flutter_secure_storage</td><td>webOS 6 has no usable key service; encrypts in the app sandbox</td></tr>
+            <tr><td>webos_service_bridge</td><td>Subscription cancel errors</td></tr>
+          </tbody>
+        </table></div>
+        <p style="margin-top:12px">The other LG plugins work unchanged. Full list on the <a href="compatibility.html#webos6">compatibility page</a>.</p>
+      </li>
+      <li id="install-tv">
+        <h3>Install on the TV</h3>
+        <p>With the TV in <a href="development.html#tv">Developer Mode</a>:</p>
+<pre><code>ares-install --device tv build/webos-compat/release/*.ipk
+ares-launch  --device tv &lt;app-id&gt;</code></pre>
+      </li>
+      <li id="check">
+        <h3>Check it works</h3>
+        <ul class="check">
+          <li>The app starts and draws; the remote's arrows and OK work.</li>
+          <li>Back goes back one page, and leaves the app from the first page.</li>
+          <li>Network, storage and each plugin the app uses.</li>
+          <li>Video: play, pause, seek, and the DRM type the app uses.</li>
+        </ul>
+        <p>If the app doesn't start, read <code>/media/developer/apps/usr/palm/applications/&lt;id&gt;/compat.log</code>. It has the app's output and the shims' messages.</p>
+      </li>
+    </ol>
+
+    <section id="differences">
+      <h2>What behaves differently</h2>
+      <ul>
+        <li><strong>Back</strong> arrives as a route pop (as on Android), not as an Escape key.</li>
+        <li><strong>Secure storage</strong> is encrypted in the app sandbox, not by a system keystore.</li>
+        <li><strong>Seeking</strong> video takes 4&ndash;7&nbsp;s to resume on webOS 6.</li>
+        <li><strong>One video plane:</strong> two players can run, but only one picture is shown.</li>
+      </ul>
+    </section>
+    <section id="publish">
+      <h2>Before publishing</h2>
+      <div class="note warn">
+        <p style="margin:0 0 8px">No legacy package has been submitted to LG's Content Store yet, so whether LG accepts the repackaged runtime is unknown.</p>
+        <p style="margin:0 0 8px">The package bundles glibc (LGPL) and the GCC runtime (GPL with the runtime exception). See the licensing section of
+          <a href="https://github.com/Webos-Flutter-Legacy-TV/flutter-webos/blob/main/legacy-webos/README.md">legacy-webos/README.md</a> for what you must ship with it.</p>
+        <p style="margin:0">The Widevine route uses the TV's CDM outside the terms it ships under. Don't enable it in a published app without legal advice.</p>
+      </div>
+    </section>
+  </article>
+</div>
+
+<footer></footer>
+<script src="assets/site.js"></script>
+</body>
+</html>

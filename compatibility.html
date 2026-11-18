@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compatibility · Webos Flutter Legacy TV</title>
+<meta name="description" content="Which webOS releases run Flutter apps through legacy-webos, what works on webOS 6, and measured frame rates.">
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header class="top"></header>
+
+<div class="page-head">
+  <div class="wrap">
+    <div class="crumb"><a href="index.html">Home</a> / Compatibility</div>
+    <h1>Compatibility</h1>
+    <p>What has been verified on a real TV, what passes the firmware check, and how fast it runs.</p>
+  </div>
+</div>
+
+<section id="releases">
+  <div class="wrap">
+    <h2>webOS releases</h2>
+    <p class="sub">The firmware check looks up every system library and function that LG's engine, embedder and plugins use, in one firmware image per
+      release (webosbrew symbol inventory 0.10.0, October 2026). It can't see kernel, Wayland or GPU driver behaviour, so only a real TV can verify a release.</p>
+    <div class="table">
+      <table>
+        <thead><tr><th>webOS</th><th>Status</th><th>Missing on that firmware</th><th>Widevine CDM</th></tr></thead>
+        <tbody>
+          <tr><td>26 (11.2)</td><td><span class="pill ok">LG's target</span></td><td>Nothing</td><td>17.1</td></tr>
+          <tr><td>22&ndash;25 (7.4&ndash;10.2)</td><td><span class="pill warn">Expected to work</span></td><td>Nothing</td><td>16.4 / 17.1</td></tr>
+          <tr><td>6 (6.4)</td><td><span class="pill ok">Verified on 6.5.3</span></td><td>Nothing</td><td>16.3</td></tr>
+          <tr><td>5 (5.3.1)</td><td><span class="pill warn">Likely works</span></td><td><code>NDL_MediaSetPlayer</code> (shimmed: one player at a time)</td><td>15.1</td></tr>
+          <tr><td>4 (4.4.2, 4.10)</td><td><span class="pill no">Needs work</span></td><td><code>libsystemd.so.0</code>, <code>libcurl.so.4</code>, <code>NDL_MediaMuteDisplay</code></td><td>&ndash; / 14.0</td></tr>
+          <tr><td>3 (3.4, 3.9)</td><td><span class="pill no">Much more work</span></td><td>As webOS 4, plus older Luna C++, i18n and pbnjson APIs; no libudev or libwebp</td><td>&ndash;</td></tr>
+          <tr><td>1&ndash;2</td><td><span class="pill no">Highest risk</span></td><td>As webOS 3, plus no Luna C++ library</td><td>&ndash;</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note">Tested your TV? <a href="https://github.com/Webos-Flutter-Legacy-TV/flutter-webos/issues/new?template=tv_compat_report.yml">Send a TV compatibility report</a> and this table gets updated.</div>
+  </div>
+</section>
+
+<section class="alt" id="webos6">
+  <div class="wrap">
+    <h2>What works on webOS 6</h2>
+    <p class="sub">Tested on an LG OLED C1 (2021) running webOS 6.5.3, launched through the normal application manager in Developer Mode.
+      Each row is covered by a test app in <code>legacy-webos/tests</code>.</p>
+    <div class="table">
+      <table>
+        <thead><tr><th>Area</th><th>Result</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>Rendering, Material UI</td><td><span class="pill ok">Works</span></td><td>1920&times;1080, Skia or Impeller</td></tr>
+          <tr><td>Remote: D-pad, OK</td><td><span class="pill ok">Works</span></td><td></td></tr>
+          <tr><td>Remote: Back</td><td><span class="pill ok">Works</span></td><td>Pops the current route; on the last route the app exits</td></tr>
+          <tr><td>DNS, HTTP, HTTPS</td><td><span class="pill ok">Works</span></td><td>Certificate verification on</td></tr>
+          <tr><td>path_provider, shared_preferences, sqflite</td><td><span class="pill ok">Works</span></td><td>Data survives reinstall</td></tr>
+          <tr><td>video_player</td><td><span class="pill ok">Works</span></td><td>Play, pause, seek, 2&times;, resized window, two players, Home and resume. Use the plugins fork</td></tr>
+          <tr><td>video_player_drm</td><td><span class="pill ok">Works</span></td><td>Clear HLS/DASH and PlayReady. Widevine with the opt-in CDM proxy (software security level, DASH only)</td></tr>
+          <tr><td>audioplayers</td><td><span class="pill ok">Works</span></td><td>Network MP3</td></tr>
+          <tr><td>audioplayers_soloud</td><td><span class="pill ok">Works</span></td><td>WAV/MP3/Opus from asset, bytes, file and URL; mixing; low latency. Use the plugins fork. Open issue: position in loop mode</td></tr>
+          <tr><td>webos_service_bridge, webos_app_manager, webos_display</td><td><span class="pill ok">Works</span></td><td>Luna calls and subscriptions</td></tr>
+          <tr><td>device_info_plus, package_info_plus, connectivity_plus</td><td><span class="pill ok">Works</span></td><td>Use <code>DeviceInfoWebOSPlugin().webosInfo</code></td></tr>
+          <tr><td>url_launcher, webos_image_texture</td><td><span class="pill ok">Works</span></td><td>url_launcher opens the TV browser</td></tr>
+          <tr><td>gamepads, flutter_keyboard_visibility, custom_mouse_cursor</td><td><span class="pill ok">Works</span></td><td>API calls; no gamepad attached during tests</td></tr>
+          <tr><td>flutter_secure_storage</td><td><span class="pill warn">Fallback</span></td><td>No system keystore on webOS 6; the fork encrypts with AES-GCM inside the app sandbox</td></tr>
+          <tr><td>flutterfire</td><td><span class="pill warn">Not tested</span></td><td>Needs a Firebase project</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="performance">
+  <div class="wrap">
+    <h2>Performance</h2>
+    <p class="sub">Frames per second at 1080p on webOS 6.5.3 (<code>tests/compat_test</code> with <code>compat-perf</code>). Impeller is far faster on the webOS 6 GPU.</p>
+    <div class="table">
+      <table>
+        <thead><tr><th>Scene</th><th class="num">Skia</th><th class="num">Impeller</th><th class="num">Impeller + dual surface</th></tr></thead>
+        <tbody>
+          <tr><td>Four large animated tiles with opacity and shadows</td><td class="num">17</td><td class="num">52</td><td class="num">54</td></tr>
+          <tr><td>Constant-speed list scroll</td><td class="num">58</td><td class="num">61</td><td class="num">61</td></tr>
+          <tr><td>64 animated tiles</td><td class="num">12</td><td class="num">19</td><td class="num">24</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="grid two" style="margin-top:22px">
+      <div class="card"><h3>Turn on Impeller</h3><p>In <code>webos/meta/flutter-conf.json</code>:</p>
+<pre><code>{ "engine-switches": { "enable-impeller": true } }</code></pre>
+        <p>Recommended, including for apps that use video_player with the plugins fork.</p></div>
+      <div class="card"><h3>Dual surface (opt-in)</h3><p>An empty <code>webos/meta/compat-dual-surface</code> file alternates two EGL surfaces, so rendering no longer waits about 10&nbsp;ms
+        per frame for the Mali driver. Raster time drops from about 17&nbsp;ms to 7&nbsp;ms.</p>
+        <p style="margin-top:8px"><strong>Known issue:</strong> with Impeller, a change drawn just before the screen goes still can stay invisible. The cause hasn't been found yet.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="alt" id="limits">
+  <div class="wrap">
+    <h2>Known limits on webOS 6</h2>
+    <div class="grid">
+      <div class="card"><h3>Media</h3><p>DASH streams with VP9/Opus tracks don't load. Only one video plane shows at a time. Playback resumes 4&ndash;7&nbsp;s after a seek.</p></div>
+      <div class="card"><h3>Widevine</h3><p>Opt-in only, software security level (L3), DASH only. Services that require hardware security reduce quality or refuse to play.</p></div>
+      <div class="card"><h3>Package size</h3><p>The legacy package is about 15&nbsp;MB larger, because it bundles glibc, the C++ runtime and the shims.</p></div>
+      <div class="card"><h3>Store submission</h3><p>No legacy package has been submitted to LG's Content Store yet, so whether LG accepts it is unknown.</p></div>
+    </div>
+  </div>
+</section>
+
+<footer></footer>
+<script src="assets/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Development setup · Webos Flutter Legacy TV</title>
+<meta name="description" content="Step-by-step development setup: host machine, toolchains, TV in Developer Mode or rooted, shims, test apps and pull requests.">
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header class="top"></header>
+
+<div class="page-head">
+  <div class="wrap">
+    <div class="crumb"><a href="index.html">Home</a> / Development</div>
+    <h1>Start development</h1>
+    <p>Everything you need to work on the project: host machine, toolchains, a TV to test on, then the shims,
+      plugins, test apps and pull requests. Plan about an hour for the first setup; most of it is downloading.</p>
+  </div>
+</div>
+
+<div class="wrap docs">
+  <nav class="toc" aria-label="On this page">
+    <div class="t">On this page</div>
+    <a href="#host">1. Host machine</a>
+    <a href="#fork">2. Fork and clone</a>
+    <a href="#setup">3. Download toolchains</a>
+    <a href="#env">4. Shell environment</a>
+    <a href="#verify">5. Check the setup</a>
+    <a href="#first">6. Build a first app</a>
+    <a href="#tv">7. Prepare a TV</a>
+    <a href="#run">8. Install and run</a>
+    <a href="#logs">9. Logs and debug switches</a>
+    <a href="#tests">10. Run the test apps</a>
+    <a href="#shims">11. Work on the shims</a>
+    <a href="#plugins">12. Work on a plugin</a>
+    <a href="#fwcheck">13. Check other releases</a>
+    <a href="#pr">14. Send a pull request</a>
+    <a href="#trouble">Troubleshooting</a>
+  </nav>
+
+  <article>
+    <ol class="steps">
+      <li id="host">
+        <h3>Host machine</h3>
+        <p>A <strong>Linux x86_64</strong> machine: Ubuntu 22.04 or newer, Debian 12 or newer, or similar. WSL2 on Windows works for building.
+          Leave about 15&nbsp;GB of free disk space for the toolchains and builds.</p>
+<pre><code><span class="c"># Debian / Ubuntu</span>
+sudo apt install git curl xz-utils dpkg-dev python3 python3-venv nodejs npm cmake build-essential openssh-client</code></pre>
+        <p>That is the only step that installs anything system-wide. Everything else goes into git-ignored folders inside the clone.</p>
+      </li>
+
+      <li id="fork">
+        <h3>Fork and clone</h3>
+        <p>Fork <a href="https://github.com/Webos-Flutter-Legacy-TV/flutter-webos">flutter-webos</a> (and
+          <a href="https://github.com/Webos-Flutter-Legacy-TV/plugins">plugins</a> if you'll change a plugin) on GitHub, then clone your forks side by side:</p>
+<pre><code>mkdir -p ~/webos-dev &amp;&amp; cd ~/webos-dev
+git clone https://github.com/&lt;you&gt;/flutter-webos.git
+git clone https://github.com/&lt;you&gt;/plugins.git
+cd flutter-webos
+git remote add org https://github.com/Webos-Flutter-Legacy-TV/flutter-webos.git</code></pre>
+        <p>The compatibility work lives in <code>flutter-webos/legacy-webos/</code>. The rest of the repo is LG's <code>flutter-webos</code> CLI.</p>
+      </li>
+
+      <li id="setup">
+        <h3>Download toolchains</h3>
+<pre><code>cd ~/webos-dev/flutter-webos/legacy-webos
+WEBOS_NDK_ACCEPT_EULA=1 ./setup.sh</code></pre>
+        <p><code>setup.sh</code> fetches into <code>toolchains/</code> and <code>downloads/</code>:</p>
+        <div class="table"><table>
+          <thead><tr><th>Component</th><th>Used for</th></tr></thead>
+          <tbody>
+            <tr><td>webosbrew buildroot-nc4 toolchain</td><td>Building the shims against glibc 2.12, so they load on every webOS release</td></tr>
+            <tr><td>Debian armel glibc (checksums verified)</td><td>The C runtime bundled into legacy packages</td></tr>
+            <tr><td>patchelf (Python venv)</td><td>Rewriting the app's ELF interpreter and library paths</td></tr>
+            <tr><td>webOS CLI (<code>ares-*</code>, local npm install)</td><td>Packaging, installing and launching on a TV</td></tr>
+            <tr><td>LG webOS NDK 11.2.0</td><td>Required by <code>flutter-webos</code> to build apps</td></tr>
+          </tbody>
+        </table></div>
+        <div class="note warn"><strong>Licence:</strong> the LG webOS NDK is covered by the LG SDK License Agreement. Setting
+          <code>WEBOS_NDK_ACCEPT_EULA=1</code> means you accept it. Without the variable, every other component is still installed and the NDK is skipped.</div>
+        <p>Re-running <code>setup.sh</code> is safe: it skips anything already present and rebuilds the shims.</p>
+      </li>
+
+      <li id="env">
+        <h3>Shell environment</h3>
+        <p>Source this in every new terminal:</p>
+<pre><code>. ~/webos-dev/flutter-webos/legacy-webos/env.sh</code></pre>
+        <p>It puts <code>flutter-webos</code>, the <code>ares-*</code> tools and <code>patchelf</code> on <code>PATH</code> and points
+          <code>flutter-webos</code> at the NDK. To make it permanent, add the line to <code>~/.bashrc</code>.</p>
+      </li>
+
+      <li id="verify">
+        <h3>Check the setup</h3>
+<pre><code>command -v flutter-webos ares-install patchelf
+ls legacy-webos/compat/*/out/          <span class="c"># the shims setup.sh built</span>
+flutter-webos --version                <span class="c"># first run builds the CLI snapshot (a minute or two)</span></code></pre>
+        <p>All three commands should resolve and the <code>out/</code> folders should contain <code>.so</code> files.</p>
+      </li>
+
+      <li id="first">
+        <h3>Build a first app</h3>
+<pre><code>cd ~/webos-dev
+flutter-webos create hello_tv
+cd hello_tv
+flutter-webos build webos --release --legacy</code></pre>
+        <p>You get two packages: <code>build/webos/arm/release/*.ipk</code> for webOS&nbsp;26, and
+          <code>build/webos-compat/release/&lt;app-id&gt;_&lt;version&gt;_arm.ipk</code> for older webOS.</p>
+      </li>
+
+      <li id="tv">
+        <h3>Prepare a TV</h3>
+        <p>Choose one of these. Developer Mode works on any TV. A rooted TV gives SSH access, which the automated test tools use.</p>
+        <div class="grid two" style="margin:14px 0">
+          <div class="card">
+            <h3>Option A: Developer Mode</h3>
+            <ol style="padding-left:20px;margin:8px 0 0;color:var(--muted);font-size:15px">
+              <li>Create a free account at <a href="https://webostv.developer.lge.com">webostv.developer.lge.com</a>.</li>
+              <li>On the TV, install <strong>Developer Mode</strong> from the LG Content Store and sign in.</li>
+              <li>Turn on <strong>Dev Mode Status</strong> and let the TV restart.</li>
+              <li>Turn on <strong>Key Server</strong> and note the IP address and passphrase shown in the app.</li>
+            </ol>
+          </div>
+          <div class="card">
+            <h3>Option B: Rooted TV</h3>
+            <p>On firmware where rooting is possible, install the Homebrew Channel (see <a href="https://www.webosbrew.org">webosbrew.org</a>)
+              and enable SSH. Put your key at <code>~/.ssh/lg_webos</code>, or set <code>TV_SSH_KEY</code>.</p>
+            <p style="margin-top:8px">Rooting is at your own risk and may void your warranty.</p>
+          </div>
+        </div>
+        <p>For Developer Mode, register the TV with the CLI once:</p>
+<pre><code>ares-setup-device --add tv --info "{'host':'&lt;TV IP&gt;','port':'9922','username':'prisoner'}"
+ares-novacom --device tv --getkey      <span class="c"># enter the passphrase from the Developer Mode app</span>
+ares-device --device tv --system-info  <span class="c"># should print the TV's model and webOS version</span></code></pre>
+        <div class="note">The Developer Mode session expires after a while. Open the app on the TV and extend it before it runs out, or your installed test apps are removed.</div>
+      </li>
+
+      <li id="run">
+        <h3>Install and run</h3>
+<pre><code><span class="c"># Developer Mode</span>
+ares-install --device tv build/webos-compat/release/*.ipk
+ares-launch  --device tv &lt;app-id&gt;
+
+<span class="c"># Rooted TV</span>
+export TV_HOST=&lt;TV IP&gt;
+../flutter-webos/legacy-webos/tools/tv-install.sh build/webos-compat/release/*.ipk --launch</code></pre>
+        <p>The app should appear on the screen. Check that the remote's arrows, OK and Back work.</p>
+      </li>
+
+      <li id="logs">
+        <h3>Logs and debug switches</h3>
+        <p>Legacy builds write the app's stdout and stderr, plus the shims' messages, to <code>compat.log</code> next to the installed binary:</p>
+<pre><code>/media/developer/apps/usr/palm/applications/&lt;app-id&gt;/compat.log</code></pre>
+        <p>To turn on extra output, add an empty file to the app's <code>webos/meta/</code> folder and rebuild:</p>
+        <div class="table"><table>
+          <thead><tr><th>File</th><th>Logs</th></tr></thead>
+          <tbody>
+            <tr><td><code>compat-log-pmlog</code></td><td>Plugin PmLog messages (they don't reach the system log from the app jail)</td></tr>
+            <tr><td><code>compat-log-ndl</code></td><td>Raw media (NDL) events</td></tr>
+            <tr><td><code>compat-log-swap</code></td><td>Frame timing: GPU time, swap waits, buffer releases</td></tr>
+            <tr><td><code>compat-log-exported</code></td><td>Video window placement requests</td></tr>
+            <tr><td><code>compat-log-globals</code>, <code>compat-log-keys</code></td><td>Wayland globals and raw key codes</td></tr>
+          </tbody>
+        </table></div>
+        <p>On a rooted TV, <code>tools/dev-cycle.sh &lt;app&gt; [seconds] --luna</code> packages, installs, launches and prints <code>compat.log</code> in one go.</p>
+      </li>
+
+      <li id="tests">
+        <h3>Run the test apps</h3>
+        <p>Each app in <code>legacy-webos/tests/</code> runs its checks on start and appends
+          <code>[X] name PASS|FAIL|INFO detail</code> lines to <code>compat_results.log</code> in the app folder.</p>
+        <div class="table"><table>
+          <thead><tr><th>App</th><th>Covers</th></tr></thead>
+          <tbody>
+            <tr><td><code>compat_test</code></td><td>Startup, rendering, networking, storage; frame timing scenes with <code>compat-perf</code></td></tr>
+            <tr><td><code>input_test</code></td><td>Remote keys, Back, focus</td></tr>
+            <tr><td><code>plugins_test</code></td><td>One check per LG plugin</td></tr>
+            <tr><td><code>video_test</code></td><td>video_player: play, seek, rate, resize, two players, Home/resume</td></tr>
+            <tr><td><code>drm_test</code></td><td>HLS/DASH, PlayReady, opt-in Widevine</td></tr>
+            <tr><td><code>soloud_test</code></td><td>audioplayers_soloud: formats, controls, mixing</td></tr>
+          </tbody>
+        </table></div>
+<pre><code>cd legacy-webos/tests/plugins_test
+flutter-webos build webos --release
+cd ../.. &amp;&amp; TV_HOST=&lt;TV IP&gt; tools/dev-cycle.sh tests/plugins_test 120 --luna</code></pre>
+        <p>With Developer Mode, build with <code>--legacy</code>, install with <code>ares-install</code>, launch the app, then read the log with
+          <code>ares-shell</code> or from the app's own screen.</p>
+      </li>
+
+      <li id="shims">
+        <h3>Work on the shims</h3>
+        <div class="table"><table>
+          <thead><tr><th>Folder</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td><code>compat/wayland-shim</code></td><td>Missing Wayland functions, protocol version clamping, Back key, EGL frame pacing, dual surface</td></tr>
+            <tr><td><code>compat/ndl-sdl-shim</code></td><td>Stand-in <code>libSDL2</code> that maps webOS&nbsp;26 media calls onto the old NDL and DRM APIs</td></tr>
+            <tr><td><code>compat/wayland-egl-forward</code></td><td>Forwards <code>libwayland-egl.so.1</code> to whichever version the TV ships</td></tr>
+            <tr><td><code>compat/widevine</code></td><td>Opt-in Widevine CDM proxy</td></tr>
+            <tr><td><code>tools/make-compat-ipk.sh</code></td><td>The packager: bundles the runtime, patches ELF files, adds the shims</td></tr>
+          </tbody>
+        </table></div>
+<pre><code>tools/build-shims.sh                   <span class="c"># rebuild after editing a shim</span>
+tools/make-compat-ipk.sh ../my_app release   <span class="c"># repackage an existing build without rebuilding the app</span></code></pre>
+        <div class="note"><strong>Rules for shim changes:</strong> build against the webosbrew toolchain only (never the NDK's glibc).
+          Put new behaviour behind an opt-in <code>webos/meta/compat-*</code> switch until it has been verified on a TV.
+          Never copy code from GPL projects. Reading them for ideas is fine.</div>
+      </li>
+
+      <li id="plugins">
+        <h3>Work on a plugin</h3>
+        <p>Point the test app (or your own app) at your local plugins checkout instead of the git dependency:</p>
+<pre><code><span class="c"># pubspec.yaml</span>
+dependencies:
+  audioplayers_soloud:
+    path: ../../../../plugins/packages/audioplayers_soloud</code></pre>
+<pre><code>flutter-webos pub get
+flutter-webos build webos --release --legacy</code></pre>
+        <p>Native plugin code is under <code>packages/&lt;plugin&gt;/webos/</code>. Switch the dependency back to the git form before committing the app.
+          To print debug output from native code, write to <code>stderr</code>; it ends up in <code>compat.log</code>.</p>
+      </li>
+
+      <li id="fwcheck">
+        <h3>Check other releases</h3>
+        <p>Without the right TV, you can still check which libraries and functions a build needs that a firmware is missing:</p>
+<pre><code>tools/fw-compat-check.py --db &lt;fw-symbols data dir&gt; build/webos/arm/release/bundle/lib/*.so</code></pre>
+        <p>The symbol data comes from webosbrew's firmware inventory. The check can't see kernel, Wayland protocol or GPU driver behaviour, so real TVs still have the final word.</p>
+      </li>
+
+      <li id="pr">
+        <h3>Send a pull request</h3>
+<pre><code>git checkout -b fix/short-description
+<span class="c"># ...edit, build, test...</span>
+git commit                              <span class="c"># say why the change is needed</span>
+git push -u origin fix/short-description
+<span class="c"># open the pull request against Webos-Flutter-Legacy-TV/flutter-webos main</span></code></pre>
+        <ul class="check">
+          <li>Fill in the pull request template, including which TV and webOS release you tested on (or "not tested on a TV").</li>
+          <li>Leave out personal data: TV IP address, serial number, MAC address, accounts.</li>
+          <li>Keep existing licence headers. New files use BSD-3-Clause.</li>
+          <li>Update <code>legacy-webos/README.md</code> or the porting guide if behaviour changes.</li>
+        </ul>
+        <p>More detail is in <a href="contribute.html">Contribute</a> and
+          <a href="https://github.com/Webos-Flutter-Legacy-TV/.github/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>.</p>
+      </li>
+    </ol>
+
+    <section id="trouble" style="padding-top:8px">
+      <h2>Troubleshooting</h2>
+      <div class="table"><table>
+        <thead><tr><th>Symptom</th><th>Fix</th></tr></thead>
+        <tbody>
+          <tr><td><code>No bundle at .../build/webos/arm/release/bundle</code></td><td>Run <code>flutter-webos build webos --release</code> before <code>make-compat-ipk.sh</code> or <code>dev-cycle.sh</code>.</td></tr>
+          <tr><td><code>webosbrew toolchain missing</code></td><td>Run <code>./setup.sh</code> again; the download may have been interrupted.</td></tr>
+          <tr><td><code>flutter-webos</code> can't find the NDK</td><td>Re-run <code>setup.sh</code> with <code>WEBOS_NDK_ACCEPT_EULA=1</code>, then source <code>env.sh</code>.</td></tr>
+          <tr><td><code>flutter-webos</code> shows old behaviour after a CLI change</td><td>The CLI snapshot is rebuilt only when git HEAD changes. Commit (or amend) to refresh it.</td></tr>
+          <tr><td>App installs but exits at once</td><td>Read <code>compat.log</code>. A missing symbol there means a firmware difference: run the firmware check.</td></tr>
+          <tr><td>Large install times out on a rooted TV</td><td><code>tv-install.sh</code> waits up to 180&nbsp;s; raise <code>TV_INSTALL_TIMEOUT</code> for very large apps.</td></tr>
+          <tr><td>Moved or resized video stays black</td><td>Use the plugins fork (7a53a97 or later) with Impeller.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+  </article>
+</div>
+
+<footer></footer>
+<script src="assets/site.js"></script>
+</body>
+</html>

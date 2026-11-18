@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How it works · Webos Flutter Legacy TV</title>
+<meta name="description" content="How legacy-webos repackages a webOS 26 Flutter build to run on older webOS: bundled runtime, Wayland and media shims, Widevine proxy, frame pacing.">
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/site.css">
+<style>
+  .flow { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 14px; align-items: center; }
+  .flow .arrow { font-size: 26px; color: var(--muted); text-align: center; }
+  @media (max-width: 820px) { .flow { grid-template-columns: 1fr; } .flow .arrow { transform: rotate(90deg); } }
+</style>
+</head>
+<body>
+<header class="top"></header>
+
+<div class="page-head">
+  <div class="wrap">
+    <div class="crumb"><a href="index.html">Home</a> / How it works</div>
+    <h1>How it works</h1>
+    <p>LG's engine and embedder are prebuilt for webOS&nbsp;26 and aren't rebuilt here. Instead, the packager wraps them in what an older TV is missing.</p>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <h2>The pipeline</h2>
+    <p class="sub"><code>--legacy</code> runs <code>tools/make-compat-ipk.sh</code> after the normal build.</p>
+    <div class="flow">
+      <div class="card"><h3>1. Normal build</h3><p><code>flutter-webos build webos</code> produces LG's webOS&nbsp;26 bundle: engine, embedder, plugins and your app.</p></div>
+      <div class="arrow">&rarr;</div>
+      <div class="card"><h3>2. Repackage</h3><p>Bundle glibc 2.41 and the C++ runtime, patch the ELF loader and library paths, add the shims.</p></div>
+      <div class="arrow">&rarr;</div>
+      <div class="card"><h3>3. Legacy IPK</h3><p>A normal webOS package. At run time the shims convert webOS&nbsp;26 calls to what the TV provides.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="alt">
+  <div class="wrap">
+    <h2>What gets fixed</h2>
+    <p class="sub">Each row is something that stopped the app on webOS&nbsp;6, with the fix applied.</p>
+    <div class="table">
+      <table>
+        <thead><tr><th>Problem on older webOS</th><th>Fix</th></tr></thead>
+        <tbody>
+          <tr><td>LG's binaries need glibc 2.38; the NDK's glibc needs kernel 5.15 or newer</td><td>Bundle Debian armel glibc 2.41 (built for kernel 3.2 or newer) in <code>lib/compat/</code></td></tr>
+          <tr><td>LG's binaries need a newer libstdc++</td><td>Bundle the NDK's own C++ runtime (GCC 13, ARMv7)</td></tr>
+          <tr><td>webOS only grants Luna permissions to the real <code>main</code> executable</td><td>No wrapper script: point the binary's ELF interpreter at the bundled loader</td></tr>
+          <tr><td>The devmode jailer's <code>LD_LIBRARY_PATH</code> overrides <code>RUNPATH</code></td><td>Use <code>DT_RPATH</code>, and add bundled libraries as direct dependencies so they load first</td></tr>
+          <tr><td>Firmware preloads an old <code>libSegFault.so</code> into every process</td><td>Bundled loader patched to skip <code>/etc/ld.so.preload</code></td></tr>
+          <tr><td><code>wl_proxy_marshal_flags</code> missing (Wayland older than 1.20)</td><td>Wayland shim implements it on the 1.11 API</td></tr>
+          <tr><td>Shell protocol v2 requested, compositor offers v1</td><td>Shim records the advertised versions and clamps binds</td></tr>
+          <tr><td>The remote's Back key never reaches the app, or arrives as Escape</td><td>Shim enables Back on the shell surface and sends a route pop</td></tr>
+          <tr><td>Firmware ships only <code>libwayland-egl.so.0</code> or only <code>.so.1</code></td><td>A small forwarder library loads whichever exists</td></tr>
+          <tr><td>Old media API takes its video window from SDL, even for audio</td><td>A stand-in <code>libSDL2</code> hands it Flutter's window, or a placeholder for audio</td></tr>
+          <tr><td>DRM licence URL in the load request is ignored on old releases</td><td>Translated into the older DRM client flow (PlayReady)</td></tr>
+          <tr><td>The Mali driver blocks about 10&nbsp;ms per frame waiting for a buffer</td><td>Opt-in second EGL surface on the same window, alternated every frame</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>The parts</h2>
+    <div class="grid">
+      <div class="card"><div class="icon">&#128230;</div><h3>Packager</h3><p><code>tools/make-compat-ipk.sh</code>: bundling, ELF patching with patchelf, shim injection, IPK output.</p></div>
+      <div class="card"><div class="icon">&#129513;</div><h3>Wayland shim</h3><p><code>compat/wayland-shim</code>: missing Wayland functions, version clamping, Back key, EGL timing, dual surface, video placement frames.</p></div>
+      <div class="card"><div class="icon">&#127916;</div><h3>Media shim</h3><p><code>compat/ndl-sdl-shim</code>: webOS&nbsp;26 media calls mapped to the old media and DRM APIs, plus a single-player fallback for webOS&nbsp;5.</p></div>
+      <div class="card"><div class="icon">&#128272;</div><h3>Widevine proxy</h3><p><code>compat/widevine</code>: opt-in. Uses the TV's CDM, serves a clear manifest on localhost and decrypts segments in place.</p></div>
+      <div class="card"><div class="icon">&#128279;</div><h3>EGL forwarder</h3><p><code>compat/wayland-egl-forward</code>: one library name that works across firmware versions.</p></div>
+      <div class="card"><div class="icon">&#128202;</div><h3>Firmware checker</h3><p><code>tools/fw-compat-check.py</code>: finds missing libraries and functions per release from firmware symbol data.</p></div>
+    </div>
+    <p style="margin-top:22px">The full technical write-up is in
+      <a href="https://github.com/Webos-Flutter-Legacy-TV/flutter-webos/blob/main/legacy-webos/README.md">legacy-webos/README.md</a>.</p>
+  </div>
+</section>
+
+<footer></footer>
+<script src="assets/site.js"></script>
+</body>
+</html>
