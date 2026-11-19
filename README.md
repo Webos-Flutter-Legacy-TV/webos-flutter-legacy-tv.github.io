@@ -13,6 +13,7 @@ and GitHub Pages publishes it.
 | `get-started.html` | Building an existing app for older TVs |
 | `development.html` | Contributor setup, step by step |
 | `how-it-works.html` | The packager and shims |
+| `drm.html` | DRM: how webOS 26 plays it, webOS 6 gaps, Widevine route status |
 | `contribute.html` | Ways to help, open work, ground rules |
 | `assets/site.css`, `assets/site.js` | Shared styles; header, footer and nav, copy buttons |
 

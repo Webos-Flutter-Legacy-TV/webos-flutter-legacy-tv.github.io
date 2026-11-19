@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DRM progress · Webos Flutter Legacy TV</title>
+<meta name="description" content="How video_player_drm plays protected video on webOS 26, what older webOS lacks, and the progress of the Widevine routes on webOS 6.">
+<link rel="icon" href="assets/brand/favicon-64.png" type="image/png">
+<link rel="stylesheet" href="assets/site.css">
+<style>
+  ol.steps { padding-left: 22px; margin: 0; }
+  ol.steps li { margin: 0 0 10px; }
+  .updated { font-size: 14px; color: var(--muted); margin-top: 12px; }
+</style>
+</head>
+<body>
+<header class="top"></header>
+
+<div class="page-head">
+  <div class="wrap">
+    <div class="crumb"><a href="index.html">Home</a> / DRM progress</div>
+    <h1>DRM progress</h1>
+    <p>How LG's <code>video_player_drm</code> plugin plays protected video on webOS&nbsp;26, what an older TV lacks, and where each route stands on webOS&nbsp;6.</p>
+    <p class="updated">Last updated 20 November 2026. Tested on an LG C1 with webOS&nbsp;6.5.3.</p>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <h2>Summary</h2>
+    <div class="grid">
+      <div class="card"><h3>PlayReady</h3><p><span class="pill ok">Works</span> The licence URL is translated into the older DRM client flow.</p></div>
+      <div class="card"><h3>Widevine, software (L3)</h3><p><span class="pill ok">Works, opt-in</span> The TV's CDM gets the licence, and a local proxy hands the media pipeline a clear stream.</p></div>
+      <div class="card"><h3>Widevine, hardware (L1)</h3><p><span class="pill warn">Experimental</span> Licence and secure decoding work up to 4K, but the picture doesn't reach the screen yet. Not in a release.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="alt">
+  <div class="wrap">
+    <h2>How it works on webOS&nbsp;26</h2>
+    <p class="sub">The plugin itself is simple. The TV's media server does almost all the work. This section is based on LG's plugin source; the media server's inner steps are inferred, not traced on a webOS&nbsp;26 TV.</p>
+    <ol class="steps">
+      <li><strong>Window.</strong> The Flutter embedder creates an <em>exported window</em>, a place on screen for a hardware video layer, with an id such as <code>_Window_Id_3</code>.</li>
+      <li><strong>Bind.</strong> The plugin calls <code>NDL_MediaInitWithWindowId(windowId)</code>.</li>
+      <li><strong>Load.</strong> The plugin calls <code>NDL_MediaLoadWithOption(url, option)</code>. The option carries <code>appId</code>, <code>windowId</code> and <code>drm: {type, licenseUrl, useLicenseCallback}</code>.</li>
+      <li><strong>Licence.</strong> With a licence URL, the media server fetches the licence itself. With a licence callback, it sends a <code>drmEncrypted</code> event with the challenge; the plugin asks the Dart side (<code>requestDrmLicense</code>) and returns the licence through <code>NDL_MediaSetDrmOperation(..., "update", ...)</code>.</li>
+      <li><strong>Decrypt and decode.</strong> The media server downloads the stream, decrypts on the secure video path and decodes in hardware.</li>
+      <li><strong>Display.</strong> The media server connects the decoder output to the exported window. The embedder places that window where the <code>VideoPlayer</code> widget is and leaves a transparent hole in the UI.</li>
+      <li><strong>Events.</strong> <code>loadCompleted</code>, <code>playing</code>, <code>currentTime</code>, <code>videoInfo</code> and the rest go back to the plugin through the NDL event callback.</li>
+    </ol>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>What webOS&nbsp;6 has, and the gaps</h2>
+    <div class="table">
+      <table>
+        <thead><tr><th>Step</th><th>webOS&nbsp;26</th><th>webOS&nbsp;6.5.3</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Bind the window</td><td><code>NDL_MediaInitWithWindowId</code></td><td>Missing; the old media API gets its window from SDL</td><td><span class="pill ok">Done</span> Mapped to <code>NDL_MediaInit</code>, with a stand-in SDL library that hands over Flutter's window</td></tr>
+          <tr><td>Video placement</td><td>Embedder exported window</td><td>Same mechanism</td><td><span class="pill ok">Works</span></td></tr>
+          <tr><td><code>drm.licenseUrl</code> in the load option</td><td>Supported</td><td>Ignored; the old releases use a separate DRM service</td><td><span class="pill ok">Done</span> For PlayReady, the shim drives the DRM service</td></tr>
+          <tr><td>Widevine in the media server</td><td>Supported (L1)</td><td>Refused: every option form fails with <code>552 Encrypted Content</code></td><td><span class="pill no">Not available</span> Needs one of the routes below</td></tr>
+          <tr><td><code>drmEncrypted</code> event (licence callback)</td><td>Sent by the media API</td><td>Never sent</td><td><span class="pill warn">Partial</span> Imitated by the L3 proxy only</td></tr>
+          <tr><td><code>NDL_MediaSetDrmOperation</code></td><td>Exists</td><td>Missing</td><td><span class="pill warn">Partial</span> Provided by the shim; works with the L3 proxy only</td></tr>
+          <tr><td>Several players (<code>NDL_MediaSetPlayer</code>)</td><td>Exists</td><td>Exists</td><td><span class="pill ok">Works</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:18px">On webOS&nbsp;6, LG's own apps get Widevine another way: web apps use the browser's built-in DRM in LG's Chromium, and the YouTube app calls the CDM and the TV's player library directly. The media path that Flutter apps use has no Widevine.</p>
+  </div>
+</section>
+
+<section class="alt">
+  <div class="wrap">
+    <h2>Widevine routes on webOS&nbsp;6</h2>
+    <div class="grid two">
+      <div class="card">
+        <h3>A. Software proxy (L3)</h3>
+        <p><span class="pill ok">Works, opt-in</span> Enabled with <code>compat-widevine-cdm</code>.</p>
+        <p style="margin-top:10px">The TV's software CDM gets the licence, by URL or through the licence callback. A proxy on <code>127.0.0.1</code> decrypts the media and hands the media server a clear stream. Seeking and adaptive bitrate switching work, and the picture shows.</p>
+        <p style="margin-top:10px">Limit: software security. Services that require hardware security reduce quality or refuse to play.</p>
+      </div>
+      <div class="card">
+        <h3>B. Hardware route (L1)</h3>
+        <p><span class="pill warn">Experimental</span> Switch <code>compat-widevine-l1</code>. Not in a release yet; the code is on the <a href="https://github.com/Webos-Flutter-Legacy-TV/flutter-webos/tree/widevine-l1/legacy-webos/compat/widevine-l1"><code>widevine-l1</code> branch</a> until the picture shows.</p>
+        <p style="margin-top:10px">Takes the same approach as the YouTube app: the TV's hardware CDM wrapper packs each sample for the secure video path, and the TV's player library (<code>StarfishMediaAPIs</code>) decodes it. The video is never decrypted inside the app.</p>
+        <p style="margin-top:10px">Our own code reads the DASH manifest and MP4 segments and sends the plugin the same events it gets from the media API.</p>
+      </div>
+    </div>
+
+    <h3 style="margin-top:30px">Hardware route status</h3>
+    <div class="table">
+      <table>
+        <thead><tr><th>Part</th><th>Status</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>Licence through the TV's hardware CDM</td><td><span class="pill ok">Works</span></td><td>Licence URL, with service certificate (privacy mode)</td></tr>
+          <tr><td>Secure decoding</td><td><span class="pill ok">Works</span></td><td>Decoder reserved, frames decoded, position advances; 1080p and 4K (3840&times;1714) H.264 with audio; seeking</td></tr>
+          <tr><td>Events to the plugin</td><td><span class="pill ok">Works</span></td><td>Size, duration, playing, paused, seek done, position, end of stream, errors</td></tr>
+          <tr><td><strong>Picture on screen</strong></td><td><span class="pill no">Missing</span></td><td>The screen stays black; the TV reports its main video output as not connected. See below</td></tr>
+          <tr><td>Licence callback</td><td><span class="pill no">Not yet</span></td><td>Licence URL only</td></tr>
+          <tr><td>HEVC, VP9, HDR</td><td><span class="pill no">Not yet</span></td><td>H.264 and AAC only; most 4K services use HEVC</td></tr>
+          <tr><td>Adaptive quality, audio track choice</td><td><span class="pill no">Not yet</span></td><td>Highest quality up to 2160p, first AAC track</td></tr>
+          <tr><td>webOS&nbsp;4 and 5</td><td><span class="pill no">Untested</span></td><td>The same player library exists on webOS&nbsp;3 to 26</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>The missing step: attaching the video to the screen</h2>
+    <p class="sub">The DRM test reported playback as passing, because the position kept advancing, but a person watching the TV saw only black. On webOS&nbsp;26, and with the media API on webOS&nbsp;6, the media server owns the player and connects its output to the screen and the exported window. The hardware route runs the player inside the app, so nothing makes that connection yet.</p>
+    <p>The exact call isn't known yet. The TV's player library has several candidates:</p>
+    <ul>
+      <li>load options <code>autoConnect</code> and <code>avSink.videoSink.type</code>;</li>
+      <li><code>StarfishMediaAPIs::setWindowId()</code>;</li>
+      <li>its own connection code, which logs "Connection Failed.". Right after loading, the player sends an event naming the main video and sound outputs, followed by one with <code>code 8</code>, most likely that failure.</li>
+    </ul>
+    <p>The YouTube app uses the same library and shows its picture, so the right settings exist. Next steps:</p>
+    <ol class="steps">
+      <li>Turn on the player's debug log and read why the connection fails.</li>
+      <li>Compare with the load settings and calls the YouTube app uses.</li>
+      <li>Make the DRM test fail on a black screen. Screenshots can't show protected video, so the test will check the video output's connection state instead of only the playback position.</li>
+    </ol>
+    <div class="note warn" style="margin-top:24px">
+      <p style="margin:0">Both Widevine routes use the TV's own CDM outside the terms LG and Google ship it under, and the device certificate could be revoked. Don't enable them in a published app without legal advice.</p>
+    </div>
+    <p style="margin-top:22px">Technical details are in
+      <a href="https://github.com/Webos-Flutter-Legacy-TV/flutter-webos/blob/main/legacy-webos/README.md">legacy-webos/README.md</a>.</p>
+  </div>
+</section>
+
+<footer></footer>
+<script src="assets/site.js"></script>
+</body>
+</html>

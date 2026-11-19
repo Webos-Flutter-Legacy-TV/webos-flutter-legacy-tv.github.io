@@ -3,7 +3,7 @@
   var GH = 'https://github.com/Webos-Flutter-Legacy-TV';
   var pages = [
     ['index.html', 'Home'], ['compatibility.html', 'Compatibility'], ['get-started.html', 'Get started'],
-    ['development.html', 'Development'], ['how-it-works.html', 'How it works'], ['contribute.html', 'Contribute']
+    ['development.html', 'Development'], ['how-it-works.html', 'How it works'], ['drm.html', 'DRM'], ['contribute.html', 'Contribute']
   ];
   var here = location.pathname.split('/').pop() || 'index.html';
 
@@ -22,7 +22,7 @@
     footer.innerHTML = '<div class="wrap cols">' +
       '<div><h4>Webos Flutter Legacy TV</h4><p>Flutter apps built with LG\'s flutter-webos SDK, running on older webOS TV releases.</p>' +
       '<p>Community project, not affiliated with or endorsed by LG Electronics. webOS and LG are trademarks of LG Electronics. Flutter is a trademark of Google LLC.</p></div>' +
-      '<div><h4>Docs</h4><a href="get-started.html">Get started</a><a href="development.html">Development setup</a><a href="compatibility.html">Compatibility</a><a href="how-it-works.html">How it works</a>' +
+      '<div><h4>Docs</h4><a href="get-started.html">Get started</a><a href="development.html">Development setup</a><a href="compatibility.html">Compatibility</a><a href="how-it-works.html">How it works</a><a href="drm.html">DRM progress</a>' +
       '<a href="' + GH + '/flutter-webos/blob/main/legacy-webos/docs/PORTING-GUIDE.md">Porting guide</a></div>' +
       '<div><h4>Code</h4><a href="' + GH + '/flutter-webos">flutter-webos</a><a href="' + GH + '/plugins">plugins</a><a href="' + GH + '/ndk">ndk</a><a href="' + GH + '">All repositories</a></div>' +
       '<div><h4>Community</h4><a href="contribute.html">Contribute</a><a href="' + GH + '/flutter-webos/issues/new/choose">Open an issue</a>' +
