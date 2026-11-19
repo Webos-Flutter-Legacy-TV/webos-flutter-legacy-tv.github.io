@@ -61,6 +61,9 @@ flutter-webos build webos --release --legacy</code></pre>
         <p style="margin-top:12px"><strong>webOS 4</strong> (opt-in, not yet tested on a TV): build with
           <code>COMPAT_WEBOS4=1 flutter-webos build webos --release --legacy</code>. That package is for webOS 4&ndash;6 only, and video placement
           doesn't work on webOS 4. See <a href="compatibility.html#releases">compatibility</a>.</p>
+        <p style="margin-top:12px"><strong>webOS 3</strong> (opt-in, not yet tested on a webOS 3 TV): build with
+          <code>COMPAT_WEBOS3=1 flutter-webos build webos --release --legacy</code>. It includes everything the webOS&nbsp;4 package adds, and is
+          for webOS 2&ndash;6 only. On webOS&nbsp;2 only apps without media or image plugins are covered.</p>
         <p style="margin-top:12px"><code>--legacy</code> needs the default <code>arm</code> target, because older TVs run 32-bit software. To repackage an existing build without rebuilding:</p>
 <pre><code>&lt;path to flutter-webos&gt;/legacy-webos/tools/make-compat-ipk.sh . release</code></pre>
       </li>

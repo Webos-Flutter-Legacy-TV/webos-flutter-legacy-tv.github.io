@@ -123,7 +123,7 @@ flutter-webos build webos --release --legacy</code></pre>
           <thead><tr><th>Package</th><th>For</th></tr></thead>
           <tbody>
             <tr><td><code>build/webos/arm/release/ipk/&lt;app-id&gt;_&lt;version&gt;_arm.ipk</code></td><td>webOS 26</td></tr>
-            <tr><td><code>build/webos-compat/release/&lt;app-id&gt;_&lt;version&gt;_arm.ipk</code></td><td>webOS 5&ndash;25 (and webOS 4 with <code>COMPAT_WEBOS4=1</code>, see <a href="get-started.html#build">Get started</a>)</td></tr>
+            <tr><td><code>build/webos-compat/release/&lt;app-id&gt;_&lt;version&gt;_arm.ipk</code></td><td>webOS 5&ndash;25 (webOS 4 with <code>COMPAT_WEBOS4=1</code>, webOS 2&ndash;3 with <code>COMPAT_WEBOS3=1</code>, see <a href="get-started.html#build">Get started</a>)</td></tr>
           </tbody>
         </table></div>
         <p style="margin-top:12px">The app id is in <code>webos/meta/appinfo.json</code> (<code>com.flutter.app.hello-tv</code> for this example).</p>
@@ -189,6 +189,7 @@ export TV_HOST=&lt;TV IP&gt;
             <tr><td><code>compat-log-swap</code></td><td>Frame timing: GPU time, swap waits, buffer releases</td></tr>
             <tr><td><code>compat-log-exported</code></td><td>Video window placement requests</td></tr>
             <tr><td><code>compat-log-globals</code>, <code>compat-log-keys</code></td><td>Wayland globals and raw key codes</td></tr>
+            <tr><td><code>compat-wl-track-versions</code></td><td>Not a log: runs the Wayland shim's webOS&nbsp;3 path on a newer TV, for testing</td></tr>
           </tbody>
         </table></div>
         <p>On a rooted TV, <code>tools/dev-cycle.sh &lt;app&gt; [seconds] --luna</code> packages, installs, launches and prints <code>compat.log</code> in one go.</p>
@@ -204,7 +205,7 @@ export TV_HOST=&lt;TV IP&gt;
             <tr><td><code>compat_test</code></td><td>Startup, rendering, networking, storage; frame timing scenes with <code>compat-perf</code></td></tr>
             <tr><td><code>input_test</code></td><td>Remote keys, Back, focus</td></tr>
             <tr><td><code>plugins_test</code></td><td>One check per LG plugin</td></tr>
-            <tr><td><code>video_test</code></td><td>video_player: play, seek, rate, resize, two players, Home/resume</td></tr>
+            <tr><td><code>video_test</code></td><td>video_player: play, seek, rate, resize, two players (only the newest is visible), Home/resume</td></tr>
             <tr><td><code>drm_test</code></td><td>HLS/DASH, PlayReady, opt-in Widevine</td></tr>
             <tr><td><code>soloud_test</code></td><td>audioplayers_soloud: formats, controls, mixing</td></tr>
           </tbody>
@@ -229,6 +230,8 @@ flutter-webos build webos --release --legacy --dart-define=MEDIA_BASE=http://&lt
             <tr><td><code>compat/ndl-sdl-shim</code></td><td>Stand-in <code>libSDL2</code> that maps webOS&nbsp;26 media calls onto the old NDL and DRM APIs</td></tr>
             <tr><td><code>compat/wayland-egl-forward</code></td><td>Forwards <code>libwayland-egl.so.1</code> to whichever version the TV ships</td></tr>
             <tr><td><code>compat/widevine</code></td><td>Opt-in Widevine CDM proxy</td></tr>
+            <tr><td><code>compat/webos4</code>, <code>compat/fallback</code></td><td>webOS&nbsp;4 extras: the <code>wl_webos_foreign</code> protocol and the curl forwarder</td></tr>
+            <tr><td><code>compat/webos3</code></td><td>webOS&nbsp;3 extras: Luna C++ library from webOS OSE, <code>libwebos3-compat</code>, the udev stand-in</td></tr>
             <tr><td><code>tools/make-compat-ipk.sh</code></td><td>The packager: bundles the runtime, patches ELF files, adds the shims</td></tr>
           </tbody>
         </table></div>
@@ -298,6 +301,7 @@ git push -u origin fix/short-description
           <tr><td>App installs but exits at once</td><td>Read <code>compat.log</code>. A missing symbol there means a firmware difference: run the firmware check.</td></tr>
           <tr><td>Large install times out on a rooted TV</td><td><code>tv-install.sh</code> waits up to 180&nbsp;s; raise <code>TV_INSTALL_TIMEOUT</code> for very large apps.</td></tr>
           <tr><td>Moved or resized video stays black</td><td>Use the plugins fork (7a53a97 or later) with Impeller.</td></tr>
+          <tr><td>A <code>video_test</code> screenshot is black, but the TV shows the video</td><td>The capture service sometimes misses the video plane (about 1 frame in 10). Check by eye, or take more than one screenshot.</td></tr>
         </tbody>
       </table></div>
     </section>

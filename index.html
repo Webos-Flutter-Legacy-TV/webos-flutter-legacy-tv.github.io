@@ -84,7 +84,9 @@
           <tr><td>6</td><td><span class="pill ok">Verified</span></td><td>webOS 6.5.3 (OLED C1, 2021).</td></tr>
           <tr><td>5</td><td><span class="pill warn">Likely works</span></td><td>One media function shimmed.</td></tr>
           <tr><td>4</td><td><span class="pill warn">Opt-in, untested</span></td><td>Firmware check passes with <code>COMPAT_WEBOS4=1</code>; no video placement.</td></tr>
-          <tr><td>3 and older</td><td><span class="pill no">Needs work</span></td><td>Older system APIs; see compatibility.</td></tr>
+          <tr><td>3</td><td><span class="pill warn">Opt-in, untested</span></td><td>Firmware check passes with <code>COMPAT_WEBOS3=1</code> for every test app; no video placement.</td></tr>
+          <tr><td>2</td><td><span class="pill warn">Opt-in, partial</span></td><td>Same <code>COMPAT_WEBOS3=1</code> package: apps without media or image plugins pass the firmware check.</td></tr>
+          <tr><td>1</td><td><span class="pill no">Needs work</span></td><td>Older Wayland, Luna and logging APIs; see compatibility.</td></tr>
         </tbody>
       </table>
     </div>

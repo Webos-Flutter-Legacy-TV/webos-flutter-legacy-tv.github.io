@@ -33,8 +33,9 @@
           <tr><td>6 (6.4)</td><td><span class="pill ok">Verified on 6.5.3</span></td><td>Nothing</td><td>16.3</td></tr>
           <tr><td>5 (5.3.1)</td><td><span class="pill warn">Likely works</span></td><td>Nothing (<code>NDL_MediaSetPlayer</code> shimmed: one player at a time)</td><td>15.1</td></tr>
           <tr><td>4 (4.4.2, 4.10)</td><td><span class="pill warn">Opt-in, untested</span></td><td>Nothing when packaged with <code>COMPAT_WEBOS4=1</code> (bundles libsystemd, libopus where a plugin uses it, a curl forwarder and the <code>wl_webos_foreign</code> protocol). CI checks every test app against this firmware on each change. No video placement. <a href="https://github.com/Webos-Flutter-Legacy-TV/flutter-webos/issues/2">Needs a TV report</a></td><td>&ndash; / 14.0</td></tr>
-          <tr><td>3 (3.4, 3.9)</td><td><span class="pill no">Much more work</span></td><td>As webOS 4, plus older Luna C++, i18n and pbnjson APIs; no libudev or libwebp</td><td>&ndash;</td></tr>
-          <tr><td>1&ndash;2</td><td><span class="pill no">Highest risk</span></td><td>As webOS 3, plus no Luna C++ library</td><td>&ndash;</td></tr>
+          <tr><td>3 (3.4, 3.9)</td><td><span class="pill warn">Opt-in, untested</span></td><td>Nothing when packaged with <code>COMPAT_WEBOS3=1</code>: on top of the webOS&nbsp;4 extras it bundles a Luna C++ library built from webOS OSE, a compatibility library (string localisation, Luna, JSON and SQLite functions), and udev and libwebp where plugins use them. CI checks every test app against this firmware. The package also ran correctly on webOS&nbsp;6.5.3. No video placement; accessibility labels stay untranslated. <a href="https://github.com/Webos-Flutter-Legacy-TV/flutter-webos/issues/new?template=tv_compat_report.yml">Needs a TV report</a></td><td>&ndash;</td></tr>
+          <tr><td>2 (2.2)</td><td><span class="pill warn">Opt-in, partial</span></td><td>With <code>COMPAT_WEBOS3=1</code>, apps without media or image plugins: nothing (the Wayland shim covers the much older libwayland). Media and image plugins need a newer JSON library (pbnjson) bundled, which is not done yet</td><td>&ndash;</td></tr>
+          <tr><td>1 (1.2, 1.4)</td><td><span class="pill no">Highest risk</span></td><td>As webOS 2, plus older Wayland, Luna and logging APIs and more webOS display protocols</td><td>&ndash;</td></tr>
         </tbody>
       </table>
     </div>
@@ -56,10 +57,10 @@
           <tr><td>Remote: Back</td><td><span class="pill ok">Works</span></td><td>Pops the current route; on the last route the app exits</td></tr>
           <tr><td>DNS, HTTP, HTTPS</td><td><span class="pill ok">Works</span></td><td>Certificate verification on</td></tr>
           <tr><td>path_provider, shared_preferences, sqflite</td><td><span class="pill ok">Works</span></td><td>Data survives reinstall</td></tr>
-          <tr><td>video_player</td><td><span class="pill ok">Works</span></td><td>Play, pause, seek, 2&times;, resized window, two players, Home and resume. Use the plugins fork</td></tr>
+          <tr><td>video_player</td><td><span class="pill ok">Works</span></td><td>Play, pause, seek, 2&times;, resized window, Home and resume. Two players both play, but only the newest is visible (one video plane). Use the plugins fork</td></tr>
           <tr><td>video_player_drm</td><td><span class="pill ok">Works</span></td><td>Clear HLS/DASH and PlayReady. Widevine with the opt-in CDM proxy (software security level, DASH only)</td></tr>
           <tr><td>audioplayers</td><td><span class="pill ok">Works</span></td><td>Network MP3</td></tr>
-          <tr><td>audioplayers_soloud</td><td><span class="pill ok">Works</span></td><td>WAV/MP3/Opus from asset, bytes, file and URL; mixing; low latency. Use the plugins fork. Open issue: position in loop mode</td></tr>
+          <tr><td>audioplayers_soloud</td><td><span class="pill ok">Works</span></td><td>WAV/MP3/Opus from asset, bytes, file and URL; looping; mixing; low latency; sound confirmed through the TV speakers. Use the plugins fork</td></tr>
           <tr><td>webos_service_bridge, webos_app_manager, webos_display</td><td><span class="pill ok">Works</span></td><td>Luna calls and subscriptions</td></tr>
           <tr><td>device_info_plus, package_info_plus, connectivity_plus</td><td><span class="pill ok">Works</span></td><td>Use <code>DeviceInfoWebOSPlugin().webosInfo</code></td></tr>
           <tr><td>url_launcher, webos_image_texture</td><td><span class="pill ok">Works</span></td><td>url_launcher opens the TV browser</td></tr>
