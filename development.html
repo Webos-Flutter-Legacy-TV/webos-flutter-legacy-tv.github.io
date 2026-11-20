@@ -229,7 +229,7 @@ flutter-webos build webos --release --legacy --dart-define=MEDIA_BASE=http://&lt
             <tr><td><code>compat/wayland-shim</code></td><td>Missing Wayland functions, protocol version clamping, Back key, EGL frame pacing, dual surface</td></tr>
             <tr><td><code>compat/ndl-sdl-shim</code></td><td>Stand-in <code>libSDL2</code> that maps webOS&nbsp;26 media calls onto the old NDL and DRM APIs</td></tr>
             <tr><td><code>compat/wayland-egl-forward</code></td><td>Forwards <code>libwayland-egl.so.1</code> to whichever version the TV ships</td></tr>
-            <tr><td><code>compat/widevine</code></td><td>Opt-in Widevine CDM proxy</td></tr>
+            <tr><td><code>compat/widevine-l1</code></td><td>Opt-in hardware Widevine route (the TV's CDM and player on the secure video path)</td></tr>
             <tr><td><code>compat/webos4</code>, <code>compat/fallback</code></td><td>webOS&nbsp;4 extras: the <code>wl_webos_foreign</code> protocol and the curl forwarder</td></tr>
             <tr><td><code>compat/webos3</code></td><td>webOS&nbsp;3 extras: Luna C++ library from webOS OSE, <code>libwebos3-compat</code>, the udev stand-in</td></tr>
             <tr><td><code>tools/make-compat-ipk.sh</code></td><td>The packager: bundles the runtime, patches ELF files, adds the shims</td></tr>

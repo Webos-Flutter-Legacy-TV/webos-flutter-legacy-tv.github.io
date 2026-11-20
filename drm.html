@@ -21,7 +21,7 @@
     <div class="crumb"><a href="index.html">Home</a> / DRM progress</div>
     <h1>DRM progress</h1>
     <p>How LG's <code>video_player_drm</code> plugin plays protected video on webOS&nbsp;26, what an older TV lacks, and where each route stands on webOS&nbsp;6.</p>
-    <p class="updated">Last updated 21 November 2026. Tested on an LG C1 with webOS&nbsp;6.5.3.</p>
+    <p class="updated">Last updated 21 November 2026 (software route removed). Tested on an LG C1 with webOS&nbsp;6.5.3.</p>
   </div>
 </div>
 
@@ -30,7 +30,7 @@
     <h2>Summary</h2>
     <div class="grid">
       <div class="card"><h3>PlayReady</h3><p><span class="pill ok">Works</span> The licence URL is translated into the older DRM client flow.</p></div>
-      <div class="card"><h3>Widevine, software (L3)</h3><p><span class="pill ok">Works, opt-in</span> The TV's CDM gets the licence, and a local proxy hands the media pipeline a clear stream.</p></div>
+      <div class="card"><h3>Widevine, software (L3)</h3><p><span class="pill no">Removed</span> It decrypted media inside the app and served it clear on the TV, which works against the content protection.</p></div>
       <div class="card"><h3>Widevine, hardware (L1)</h3><p><span class="pill warn">Experimental</span> Plays on screen up to 4K, H.264 and HEVC, with the stock plugin. On <code>main</code>, not in a release yet.</p></div>
     </div>
   </div>
@@ -63,8 +63,8 @@
           <tr><td>Video placement</td><td>Embedder exported window</td><td>Same mechanism</td><td><span class="pill ok">Works</span></td></tr>
           <tr><td><code>drm.licenseUrl</code> in the load option</td><td>Supported</td><td>Ignored; the old releases use a separate DRM service</td><td><span class="pill ok">Done</span> For PlayReady, the shim drives the DRM service</td></tr>
           <tr><td>Widevine in the media server</td><td>Supported (L1)</td><td>Refused: every option form fails with <code>552 Encrypted Content</code></td><td><span class="pill no">Not available</span> Needs one of the routes below</td></tr>
-          <tr><td><code>drmEncrypted</code> event (licence callback)</td><td>Sent by the media API</td><td>Never sent</td><td><span class="pill warn">Partial</span> Imitated by the L3 proxy only</td></tr>
-          <tr><td><code>NDL_MediaSetDrmOperation</code></td><td>Exists</td><td>Missing</td><td><span class="pill warn">Partial</span> Provided by the shim; works with the L3 proxy only</td></tr>
+          <tr><td><code>drmEncrypted</code> event (licence callback)</td><td>Sent by the media API</td><td>Never sent</td><td><span class="pill warn">Partial</span> Imitated by the hardware route</td></tr>
+          <tr><td><code>NDL_MediaSetDrmOperation</code></td><td>Exists</td><td>Missing</td><td><span class="pill warn">Partial</span> Provided by the shim; works with the hardware route</td></tr>
           <tr><td>Several players (<code>NDL_MediaSetPlayer</code>)</td><td>Exists</td><td>Exists</td><td><span class="pill ok">Works</span></td></tr>
         </tbody>
       </table>
@@ -75,19 +75,18 @@
 
 <section class="alt">
   <div class="wrap">
-    <h2>Widevine routes on webOS&nbsp;6</h2>
+    <h2>Widevine on webOS&nbsp;6</h2>
     <div class="grid two">
       <div class="card">
-        <h3>A. Software proxy (L3)</h3>
-        <p><span class="pill ok">Works, opt-in</span> Enabled with <code>compat-widevine-cdm</code>.</p>
-        <p style="margin-top:10px">The TV's software CDM gets the licence, by URL or through the licence callback. A proxy on <code>127.0.0.1</code> decrypts the media and hands the media server a clear stream. Seeking and adaptive bitrate switching work, and the picture shows.</p>
-        <p style="margin-top:10px">Limit: software security. Services that require hardware security reduce quality or refuse to play.</p>
-      </div>
-      <div class="card">
-        <h3>B. Hardware route (L1)</h3>
+        <h3>Hardware route (L1)</h3>
         <p><span class="pill warn">Experimental</span> Switch <code>compat-widevine-l1</code>. On <code>main</code>, not in a release yet: <a href="https://github.com/Webos-Flutter-Legacy-TV/flutter-webos/tree/main/legacy-webos/compat/widevine-l1"><code>compat/widevine-l1</code></a>.</p>
         <p style="margin-top:10px">Takes the same approach as the YouTube app: the TV's hardware CDM wrapper packs each sample for the secure video path, and the TV's player library (<code>StarfishMediaAPIs</code>) decodes it. The video is never decrypted inside the app.</p>
         <p style="margin-top:10px">Our own code reads the DASH manifest and MP4 segments and sends the plugin the same events it gets from the media API.</p>
+      </div>
+      <div class="card">
+        <h3>Software route (L3): removed</h3>
+        <p><span class="pill no">Removed</span> 21 November 2026.</p>
+        <p style="margin-top:10px">An earlier route used the TV's software CDM to decrypt the media inside the app and served it clear on <code>127.0.0.1</code> for the old media pipeline. While it played, decrypted video sat outside any protected path. That works against the protection the content owner chose, so it was removed. The project does not decrypt content outside the TV's secure hardware.</p>
       </div>
     </div>
 
@@ -120,7 +119,7 @@
     </ol>
     <p>Found by comparing with YouTube's app (recording its calls on the TV's service bus), with Kodi's webOS player source, and by disassembling the embedder's exported-window code to list its compositor requests. The plugin needed no change.</p>
     <div class="note warn" style="margin-top:24px">
-      <p style="margin:0">Both Widevine routes use the TV's own CDM outside the terms LG and Google ship it under, and the device certificate could be revoked. Don't enable them in a published app without legal advice.</p>
+      <p style="margin:0">The hardware route keeps content protection in place: video is decrypted only in the TV's secure hardware, and nothing decrypted leaves the player. It still uses the TV's CDM and player library outside the terms LG and Google ship them under, and the device certificate could be revoked. Don't enable it in a published app without legal advice.</p>
     </div>
     <p style="margin-top:22px">Technical details are in
       <a href="https://github.com/Webos-Flutter-Legacy-TV/flutter-webos/blob/main/legacy-webos/README.md">legacy-webos/README.md</a>.</p>

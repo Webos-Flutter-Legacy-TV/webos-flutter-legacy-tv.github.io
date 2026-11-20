@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>How it works · Webos Flutter Legacy TV</title>
-<meta name="description" content="How legacy-webos repackages a webOS 26 Flutter build to run on older webOS: bundled runtime, Wayland and media shims, Widevine proxy, frame pacing.">
+<meta name="description" content="How legacy-webos repackages a webOS 26 Flutter build to run on older webOS: bundled runtime, Wayland and media shims, hardware Widevine route, frame pacing.">
 <link rel="icon" href="assets/brand/favicon-64.png" type="image/png">
 <link rel="stylesheet" href="assets/site.css">
 <style>
@@ -74,7 +74,7 @@
       <div class="card"><div class="icon">&#128230;</div><h3>Packager</h3><p><code>tools/make-compat-ipk.sh</code>: bundling, ELF patching with patchelf, shim injection, IPK output.</p></div>
       <div class="card"><div class="icon">&#129513;</div><h3>Wayland shim</h3><p><code>compat/wayland-shim</code>: missing Wayland functions, version clamping, Back key, EGL timing, dual surface, video placement frames.</p></div>
       <div class="card"><div class="icon">&#127916;</div><h3>Media shim</h3><p><code>compat/ndl-sdl-shim</code>: webOS&nbsp;26 media calls mapped to the old media and DRM APIs, plus a single-player fallback for webOS&nbsp;5.</p></div>
-      <div class="card"><div class="icon">&#128272;</div><h3>Widevine proxy</h3><p><code>compat/widevine</code>: opt-in. Uses the TV's CDM, serves a clear manifest on localhost and decrypts segments in place.</p></div>
+      <div class="card"><div class="icon">&#128272;</div><h3>Hardware Widevine</h3><p><code>compat/widevine-l1</code>: opt-in, experimental. The TV's CDM and player library on the secure video path; video is decrypted only in the TV's secure hardware.</p></div>
       <div class="card"><div class="icon">&#128225;</div><h3>webOS 3 libraries</h3><p><code>compat/webos3</code>: opt-in with <code>COMPAT_WEBOS3=1</code>. Luna C++ library from webOS OSE, <code>libwebos3-compat</code> and a udev stand-in.</p></div>
       <div class="card"><div class="icon">&#128279;</div><h3>EGL forwarder</h3><p><code>compat/wayland-egl-forward</code>: one library name that works across firmware versions.</p></div>
       <div class="card"><div class="icon">&#128202;</div><h3>Firmware checker</h3><p><code>tools/fw-compat-check.py</code>: finds missing libraries and functions per release from firmware symbol data. <code>tools/check-compat-ipk.py</code> checks each package's structure. Both run in CI.</p></div>
