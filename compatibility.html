@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Compatibility · Webos Flutter Legacy TV</title>
-<meta name="description" content="Which webOS releases run Flutter apps through legacy-webos, what works on webOS 6, and measured frame rates.">
+<meta name="description" content="Which webOS releases run Flutter apps through legacy-webos, what works on webOS 6, how it compares with webOS 26, and measured frame rates.">
 <link rel="icon" href="assets/brand/favicon-64.png" type="image/png">
 <link rel="stylesheet" href="assets/site.css">
 </head>
@@ -58,7 +58,7 @@
           <tr><td>DNS, HTTP, HTTPS</td><td><span class="pill ok">Works</span></td><td>Certificate verification on</td></tr>
           <tr><td>path_provider, shared_preferences, sqflite</td><td><span class="pill ok">Works</span></td><td>Data survives reinstall</td></tr>
           <tr><td>video_player</td><td><span class="pill ok">Works</span></td><td>Play, pause, seek, 2&times;, resized window, Home and resume. Two players both play, but only the newest is visible (one video plane). Use the plugins fork</td></tr>
-          <tr><td>video_player_drm</td><td><span class="pill ok">Works</span></td><td>Clear HLS/DASH and PlayReady. Widevine with the opt-in CDM proxy (software security level, DASH only)</td></tr>
+          <tr><td>video_player_drm</td><td><span class="pill ok">Works</span></td><td>Clear HLS/DASH and PlayReady. Widevine with an opt-in route: the CDM proxy (software security level) or the experimental hardware route (L1, up to 4K). See <a href="drm.html">DRM progress</a></td></tr>
           <tr><td>audioplayers</td><td><span class="pill ok">Works</span></td><td>Network MP3</td></tr>
           <tr><td>audioplayers_soloud</td><td><span class="pill ok">Works</span></td><td>WAV/MP3/Opus from asset, bytes, file and URL; looping; mixing; low latency; sound confirmed through the TV speakers. Use the plugins fork</td></tr>
           <tr><td>webos_service_bridge, webos_app_manager, webos_display</td><td><span class="pill ok">Works</span></td><td>Luna calls and subscriptions</td></tr>
@@ -99,12 +99,38 @@
   </div>
 </section>
 
+<section id="vs26">
+  <div class="wrap">
+    <h2>Compared with webOS&nbsp;26</h2>
+    <p class="sub">The same app on LG's own target and on an older TV through legacy-webos. The webOS&nbsp;26 column follows LG's design and plugin source; the project has not run it on a webOS&nbsp;26 TV. The legacy column is measured on webOS&nbsp;6.5.3.</p>
+    <div class="table">
+      <table>
+        <thead><tr><th>Area</th><th>webOS&nbsp;26</th><th>Older webOS (legacy-webos)</th></tr></thead>
+        <tbody>
+          <tr><td>App code and build</td><td>LG's SDK</td><td><span class="pill ok">Same</span> Same source, same <code>flutter-webos build</code> with <code>--legacy</code>; LG's engine and embedder unchanged</td></tr>
+          <tr><td>Package</td><td>LG's IPK</td><td><span class="pill ok">Same app</span> About 15&nbsp;MB larger (glibc, C++ runtime, shims)</td></tr>
+          <tr><td>UI, network, storage, most plugins</td><td>Works</td><td><span class="pill ok">Same</span> Four plugins need the fork: video_player, video_player_drm, flutter_secure_storage, webos_service_bridge</td></tr>
+          <tr><td>Back key</td><td>Handled by the embedder</td><td><span class="pill ok">Works</span> Arrives as a route pop, like Android; <code>Navigator</code> and <code>PopScope</code> work as usual</td></tr>
+          <tr><td>Frame rate</td><td>Not measured</td><td><span class="pill warn">Slower</span> 50&ndash;60&nbsp;fps for light UI with Impeller; large shadows, blurs and opacity are slow</td></tr>
+          <tr><td>Secure storage</td><td>Hardware-backed key service</td><td><span class="pill warn">Fallback</span> AES-GCM with a key in the app's folder: safe from other apps, not from root</td></tr>
+          <tr><td>Video</td><td>Media server, exported windows</td><td><span class="pill warn">Limits</span> One visible video at a time; resumes 4&ndash;7&nbsp;s after a seek</td></tr>
+          <tr><td>PlayReady</td><td>Licence URL</td><td><span class="pill ok">Works</span> Translated to the older DRM service</td></tr>
+          <tr><td>Widevine</td><td>Built into the media server (L1)</td><td><span class="pill warn">Opt-in</span> Software route (L3), or the experimental hardware route (L1, up to 4K, HDR10, Dolby Vision, Atmos). No HLS or in-stream subtitles; outside the CDM's terms</td></tr>
+          <tr><td>Releases</td><td>26</td><td><span class="pill warn">Partly checked</span> 6.5.3 on a TV; 22&ndash;25 and 5 by firmware check; 3 and 4 opt-in without video</td></tr>
+          <tr><td>LG Content Store</td><td>Normal route</td><td><span class="pill warn">Unknown</span> No legacy package submitted yet</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:18px">Present on both, because they come from LG's embedder or plugins: <code>refreshRate</code> reports 16666 instead of 60, the generic <code>DeviceInfoPlugin().deviceInfo</code> throws (use <code>webosInfo</code>), and the video plugin has no per-stream volume.</p>
+  </div>
+</section>
+
 <section class="alt" id="limits">
   <div class="wrap">
     <h2>Known limits on webOS 6</h2>
     <div class="grid">
-      <div class="card"><h3>Media</h3><p>DASH streams with VP9/Opus tracks don't load. Only one video plane shows at a time. Playback resumes 4&ndash;7&nbsp;s after a seek.</p></div>
-      <div class="card"><h3>Widevine</h3><p>Opt-in only, software security level (L3), DASH only. Services that require hardware security reduce quality or refuse to play. A hardware route is in progress: see <a href="drm.html">DRM progress</a>.</p></div>
+      <div class="card"><h3>Media</h3><p>DASH streams with VP9/Opus tracks don't load through the media pipeline (Widevine ones play through the hardware route). Only one video plane shows at a time. Playback resumes 4&ndash;7&nbsp;s after a seek.</p></div>
+      <div class="card"><h3>Widevine</h3><p>Opt-in only, DASH only. The software route (L3) works; services that require hardware security reduce quality or refuse. The hardware route (L1) plays up to 4K and is experimental: see <a href="drm.html">DRM progress</a>.</p></div>
       <div class="card"><h3>Package size</h3><p>The legacy package is about 15&nbsp;MB larger, because it bundles glibc, the C++ runtime and the shims.</p></div>
       <div class="card"><h3>Store submission</h3><p>No legacy package has been submitted to LG's Content Store yet, so whether LG accepts it is unknown.</p></div>
     </div>
