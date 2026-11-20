@@ -31,7 +31,7 @@
     <div class="grid">
       <div class="card"><h3>PlayReady</h3><p><span class="pill ok">Works</span> The licence URL is translated into the older DRM client flow.</p></div>
       <div class="card"><h3>Widevine, software (L3)</h3><p><span class="pill ok">Works, opt-in</span> The TV's CDM gets the licence, and a local proxy hands the media pipeline a clear stream.</p></div>
-      <div class="card"><h3>Widevine, hardware (L1)</h3><p><span class="pill warn">Experimental</span> Plays on screen up to 4K, H.264 and HEVC, with the stock plugin. Not in a release yet.</p></div>
+      <div class="card"><h3>Widevine, hardware (L1)</h3><p><span class="pill warn">Experimental</span> Plays on screen up to 4K, H.264 and HEVC, with the stock plugin. On <code>main</code>, not in a release yet.</p></div>
     </div>
   </div>
 </section>
@@ -85,7 +85,7 @@
       </div>
       <div class="card">
         <h3>B. Hardware route (L1)</h3>
-        <p><span class="pill warn">Experimental</span> Switch <code>compat-widevine-l1</code>. Not in a release yet; the code is on the <a href="https://github.com/Webos-Flutter-Legacy-TV/flutter-webos/tree/widevine-l1/legacy-webos/compat/widevine-l1"><code>widevine-l1</code> branch</a> until it is in a release.</p>
+        <p><span class="pill warn">Experimental</span> Switch <code>compat-widevine-l1</code>. On <code>main</code>, not in a release yet: <a href="https://github.com/Webos-Flutter-Legacy-TV/flutter-webos/tree/main/legacy-webos/compat/widevine-l1"><code>compat/widevine-l1</code></a>.</p>
         <p style="margin-top:10px">Takes the same approach as the YouTube app: the TV's hardware CDM wrapper packs each sample for the secure video path, and the TV's player library (<code>StarfishMediaAPIs</code>) decodes it. The video is never decrypted inside the app.</p>
         <p style="margin-top:10px">Our own code reads the DASH manifest and MP4 segments and sends the plugin the same events it gets from the media API.</p>
       </div>
