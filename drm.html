@@ -31,7 +31,7 @@
     <div class="grid">
       <div class="card"><h3>PlayReady</h3><p><span class="pill ok">Works</span> The licence URL is translated into the older DRM client flow.</p></div>
       <div class="card"><h3>Widevine, software (L3)</h3><p><span class="pill ok">Works, opt-in</span> The TV's CDM gets the licence, and a local proxy hands the media pipeline a clear stream.</p></div>
-      <div class="card"><h3>Widevine, hardware (L1)</h3><p><span class="pill warn">Experimental</span> Licence and secure decoding work up to 4K, but the picture doesn't reach the screen yet. Not in a release.</p></div>
+      <div class="card"><h3>Widevine, hardware (L1)</h3><p><span class="pill warn">Experimental</span> Plays on screen up to 4K, H.264 and HEVC, with the stock plugin. Not in a release yet.</p></div>
     </div>
   </div>
 </section>
@@ -85,7 +85,7 @@
       </div>
       <div class="card">
         <h3>B. Hardware route (L1)</h3>
-        <p><span class="pill warn">Experimental</span> Switch <code>compat-widevine-l1</code>. Not in a release yet; the code is on the <a href="https://github.com/Webos-Flutter-Legacy-TV/flutter-webos/tree/widevine-l1/legacy-webos/compat/widevine-l1"><code>widevine-l1</code> branch</a> until the picture shows.</p>
+        <p><span class="pill warn">Experimental</span> Switch <code>compat-widevine-l1</code>. Not in a release yet; the code is on the <a href="https://github.com/Webos-Flutter-Legacy-TV/flutter-webos/tree/widevine-l1/legacy-webos/compat/widevine-l1"><code>widevine-l1</code> branch</a> until it is in a release.</p>
         <p style="margin-top:10px">Takes the same approach as the YouTube app: the TV's hardware CDM wrapper packs each sample for the secure video path, and the TV's player library (<code>StarfishMediaAPIs</code>) decodes it. The video is never decrypted inside the app.</p>
         <p style="margin-top:10px">Our own code reads the DASH manifest and MP4 segments and sends the plugin the same events it gets from the media API.</p>
       </div>
@@ -96,14 +96,12 @@
       <table>
         <thead><tr><th>Part</th><th>Status</th><th>Notes</th></tr></thead>
         <tbody>
-          <tr><td>Licence through the TV's hardware CDM</td><td><span class="pill ok">Works</span></td><td>Licence URL, with service certificate (privacy mode)</td></tr>
-          <tr><td>Secure decoding</td><td><span class="pill ok">Works</span></td><td>Decoder reserved, frames decoded, position advances; 1080p and 4K (3840&times;1714) H.264 with audio; seeking</td></tr>
-          <tr><td>Events to the plugin</td><td><span class="pill ok">Works</span></td><td>Size, duration, playing, paused, seek done, position, end of stream, errors</td></tr>
-          <tr><td><strong>Picture on screen</strong></td><td><span class="pill no">Missing</span></td><td>The screen stays black; the TV reports its main video output as not connected. See below</td></tr>
-          <tr><td>Licence callback</td><td><span class="pill no">Not yet</span></td><td>Licence URL only</td></tr>
-          <tr><td>HEVC, VP9, HDR</td><td><span class="pill no">Not yet</span></td><td>H.264 and AAC only; most 4K services use HEVC</td></tr>
-          <tr><td>Adaptive quality, audio track choice</td><td><span class="pill no">Not yet</span></td><td>Highest quality up to 2160p, first AAC track</td></tr>
-          <tr><td>webOS&nbsp;4 and 5</td><td><span class="pill no">Untested</span></td><td>The same player library exists on webOS&nbsp;3 to 26</td></tr>
+          <tr><td>Licence through the TV's hardware CDM</td><td><span class="pill ok">Works</span></td><td>Licence URL or the app's licence callback, with service certificate (privacy mode)</td></tr>
+          <tr><td>Picture on screen</td><td><span class="pill ok">Works</span></td><td>1080p and 4K (3840&times;1714) H.264 and HEVC, with audio; seen on the TV</td></tr>
+          <tr><td>Seeking, audio track switching</td><td><span class="pill ok">Works</span></td><td>Tested with a five-language stream</td></tr>
+          <tr><td>VP9, AV1, Dolby Vision, HDR10, E-AC-3/AC-3/Opus, live DASH, several periods and keys, adaptive quality</td><td><span class="pill warn">Built</span></td><td>Checked on a PC with public streams, not yet on the TV. The multi-period test stream's licence server refuses its published token</td></tr>
+          <tr><td>In-stream subtitles, HLS</td><td><span class="pill no">Not supported</span></td><td>No subtitle renderer on this route; apps can use Flutter's caption support</td></tr>
+          <tr><td>webOS&nbsp;3 to 5, 7 and later</td><td><span class="pill no">Untested</span></td><td>The same player library exists on webOS&nbsp;3 to 26</td></tr>
         </tbody>
       </table>
     </div>
@@ -112,20 +110,14 @@
 
 <section>
   <div class="wrap">
-    <h2>The missing step: attaching the video to the screen</h2>
-    <p class="sub">The DRM test reported playback as passing, because the position kept advancing, but a person watching the TV saw only black. On webOS&nbsp;26, and with the media API on webOS&nbsp;6, the media server owns the player and connects its output to the screen and the exported window. The hardware route runs the player inside the app, so nothing makes that connection yet.</p>
-    <p>The exact call isn't known yet. The TV's player library has several candidates:</p>
-    <ul>
-      <li>load options <code>autoConnect</code> and <code>avSink.videoSink.type</code>;</li>
-      <li><code>StarfishMediaAPIs::setWindowId()</code>;</li>
-      <li>its own connection code, which logs "Connection Failed.". Right after loading, the player sends an event naming the main video and sound outputs, followed by one with <code>code 8</code>, most likely that failure.</li>
-    </ul>
-    <p>The YouTube app uses the same library and shows its picture, so the right settings exist. Next steps:</p>
+    <h2>How the picture reached the screen</h2>
+    <p class="sub">The hardware route first played with sound only: the test passed because the position kept advancing, but the screen stayed black. NDL's video is drawn above the app by the compositor; this route's video sits under the Flutter UI, so the video widget's transparent hole has to reach the screen.</p>
     <ol class="steps">
-      <li>Turn on the player's debug log and read why the connection fails.</li>
-      <li>Compare with the load settings and calls the YouTube app uses.</li>
-      <li>Make the DRM test fail on a black screen. Screenshots can't show protected video, so the test will check the video output's connection state instead of only the playback position.</li>
+      <li><strong>Place the video.</strong> The player tells the TV's video output service where to show it (<code>display/setDisplayWindow</code>, with the player's media id), as the YouTube app does.</li>
+      <li><strong>Redraw after the TV applies it.</strong> The player subscribes to <code>display/getApplyDoneWindowRegion</code> and asks the app for a new frame on each update, so the app's surface is committed after the video area is in place.</li>
+      <li><strong>Redraw whole frames while a video is loaded.</strong> The Wayland shim reports buffer age 0, so the embedder no longer redraws only what changed. With this Mali driver's buffer age, that left the hole in one buffer only, and the next frame brought the black back.</li>
     </ol>
+    <p>Found by comparing with YouTube's app (recording its calls on the TV's service bus), with Kodi's webOS player source, and by disassembling the embedder's exported-window code to list its compositor requests. The plugin needed no change.</p>
     <div class="note warn" style="margin-top:24px">
       <p style="margin:0">Both Widevine routes use the TV's own CDM outside the terms LG and Google ship it under, and the device certificate could be revoked. Don't enable them in a published app without legal advice.</p>
     </div>
