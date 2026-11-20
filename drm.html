@@ -31,7 +31,7 @@
     <div class="grid">
       <div class="card"><h3>PlayReady</h3><p><span class="pill ok">Works</span> The licence URL is translated into the older DRM client flow.</p></div>
       <div class="card"><h3>Widevine, software (L3)</h3><p><span class="pill no">Removed</span> It decrypted media inside the app and served it clear on the TV, which works against the content protection.</p></div>
-      <div class="card"><h3>Widevine, hardware (L1)</h3><p><span class="pill warn">Experimental</span> Plays on screen up to 4K, H.264 and HEVC, with the stock plugin. On <code>main</code>, not in a release yet.</p></div>
+      <div class="card"><h3>Widevine, hardware (L1)</h3><p><span class="pill warn">Research only</span> Plays on screen up to 4K, H.264 and HEVC, with the stock plugin. On <code>main</code>, not in a release yet.</p></div>
     </div>
   </div>
 </section>
@@ -79,7 +79,7 @@
     <div class="grid two">
       <div class="card">
         <h3>Hardware route (L1)</h3>
-        <p><span class="pill warn">Experimental</span> Switch <code>compat-widevine-l1</code>. On <code>main</code>, not in a release yet: <a href="https://github.com/Webos-Flutter-Legacy-TV/flutter-webos/tree/main/legacy-webos/compat/widevine-l1"><code>compat/widevine-l1</code></a>.</p>
+        <p><span class="pill warn">Experimental, research only</span> Switch <code>compat-widevine-l1</code>. Not for published apps (see the warning below). On <code>main</code>, not in a release yet: <a href="https://github.com/Webos-Flutter-Legacy-TV/flutter-webos/tree/main/legacy-webos/compat/widevine-l1"><code>compat/widevine-l1</code></a>.</p>
         <p style="margin-top:10px">Takes the same approach as the YouTube app: the TV's hardware CDM wrapper packs each sample for the secure video path, and the TV's player library (<code>StarfishMediaAPIs</code>) decodes it. The video is never decrypted inside the app.</p>
         <p style="margin-top:10px">Our own code reads the DASH manifest and MP4 segments and sends the plugin the same events it gets from the media API.</p>
       </div>
@@ -119,7 +119,15 @@
     </ol>
     <p>Found by comparing with YouTube's app (recording its calls on the TV's service bus), with Kodi's webOS player source, and by disassembling the embedder's exported-window code to list its compositor requests. The plugin needed no change.</p>
     <div class="note warn" style="margin-top:24px">
-      <p style="margin:0">The hardware route keeps content protection in place: video is decrypted only in the TV's secure hardware, and nothing decrypted leaves the player. It still uses the TV's CDM and player library outside the terms LG and Google ship them under, and the device certificate could be revoked. Don't enable it in a published app without legal advice.</p>
+      <p style="margin:0 0 8px"><strong>Research use only. Do not ship the hardware Widevine route in a published app.</strong></p>
+      <ul style="margin:0 0 8px;padding-left:20px">
+        <li><strong>Not licensed:</strong> it uses the TV's Widevine CDM and LG's player library from an app that neither Google nor LG has licensed to use them. That is outside Google's Widevine licensing and very likely outside the TV's software terms.</li>
+        <li><strong>Studio contracts:</strong> services that carry studio content usually have to use certified clients, so shipping it can also break their content contracts.</li>
+        <li><strong>Revocation:</strong> Google can revoke the TV's Widevine device certificate, which would break Widevine in every app on that TV.</li>
+        <li><strong>Untested in law:</strong> whether using or distributing it is lawful (for example under DMCA section&nbsp;1201) has not been tested in court.</li>
+        <li><strong>What it does keep:</strong> content protection. Video is decrypted only in the TV's secure hardware, and nothing decrypted leaves the player.</li>
+      </ul>
+      <p style="margin:0">Use it only to test on your own TV, with content you are entitled to play. Get legal advice before anything else.</p>
     </div>
     <p style="margin-top:22px">Technical details are in
       <a href="https://github.com/Webos-Flutter-Legacy-TV/flutter-webos/blob/main/legacy-webos/README.md">legacy-webos/README.md</a>.</p>

@@ -115,7 +115,7 @@
           <tr><td>Secure storage</td><td>Hardware-backed key service</td><td><span class="pill warn">Fallback</span> AES-GCM with a key in the app's folder: safe from other apps, not from root</td></tr>
           <tr><td>Video</td><td>Media server, exported windows</td><td><span class="pill warn">Limits</span> One visible video at a time; resumes 4&ndash;7&nbsp;s after a seek</td></tr>
           <tr><td>PlayReady</td><td>Licence URL</td><td><span class="pill ok">Works</span> Translated to the older DRM service</td></tr>
-          <tr><td>Widevine</td><td>Built into the media server (L1)</td><td><span class="pill warn">Opt-in</span> Experimental hardware route (L1, up to 4K, HDR10, Dolby Vision, Atmos); video decrypted only in the TV's secure hardware. No HLS or in-stream subtitles; outside the CDM's terms</td></tr>
+          <tr><td>Widevine</td><td>Built into the media server (L1)</td><td><span class="pill warn">Opt-in</span> Experimental hardware route (L1, up to 4K, HDR10, Dolby Vision, Atmos); video decrypted only in the TV's secure hardware. Research only: unlicensed by Google and LG, not for published apps. No HLS or in-stream subtitles; outside the CDM's terms</td></tr>
           <tr><td>Releases</td><td>26</td><td><span class="pill warn">Partly checked</span> 6.5.3 on a TV; 22&ndash;25 and 5 by firmware check; 3 and 4 opt-in without video</td></tr>
           <tr><td>LG Content Store</td><td>Normal route</td><td><span class="pill warn">Unknown</span> No legacy package submitted yet</td></tr>
         </tbody>
@@ -130,7 +130,7 @@
     <h2>Known limits on webOS 6</h2>
     <div class="grid">
       <div class="card"><h3>Media</h3><p>DASH streams with VP9/Opus tracks don't load through the media pipeline (Widevine ones play through the hardware route). Only one video plane shows at a time. Playback resumes 4&ndash;7&nbsp;s after a seek.</p></div>
-      <div class="card"><h3>Widevine</h3><p>Opt-in, experimental, DASH only: the hardware route (L1) plays up to 4K. The earlier software route was removed because it decrypted media in the app. See <a href="drm.html">DRM progress</a>.</p></div>
+      <div class="card"><h3>Widevine</h3><p>Opt-in, experimental, research only (not licensed by Google or LG; not for published apps), DASH only: the hardware route (L1) plays up to 4K. The earlier software route was removed because it decrypted media in the app. See <a href="drm.html">DRM progress</a>.</p></div>
       <div class="card"><h3>Package size</h3><p>The legacy package is about 15&nbsp;MB larger, because it bundles glibc, the C++ runtime and the shims.</p></div>
       <div class="card"><h3>Store submission</h3><p>No legacy package has been submitted to LG's Content Store yet, so whether LG accepts it is unknown.</p></div>
     </div>
