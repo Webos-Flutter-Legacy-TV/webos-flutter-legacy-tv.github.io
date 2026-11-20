@@ -21,7 +21,7 @@
     <div class="crumb"><a href="index.html">Home</a> / DRM progress</div>
     <h1>DRM progress</h1>
     <p>How LG's <code>video_player_drm</code> plugin plays protected video on webOS&nbsp;26, what an older TV lacks, and where each route stands on webOS&nbsp;6.</p>
-    <p class="updated">Last updated 20 November 2026. Tested on an LG C1 with webOS&nbsp;6.5.3.</p>
+    <p class="updated">Last updated 21 November 2026. Tested on an LG C1 with webOS&nbsp;6.5.3.</p>
   </div>
 </div>
 
@@ -99,7 +99,8 @@
           <tr><td>Licence through the TV's hardware CDM</td><td><span class="pill ok">Works</span></td><td>Licence URL or the app's licence callback, with service certificate (privacy mode)</td></tr>
           <tr><td>Picture on screen</td><td><span class="pill ok">Works</span></td><td>1080p and 4K (3840&times;1714) H.264 and HEVC, with audio; seen on the TV</td></tr>
           <tr><td>Seeking, audio track switching</td><td><span class="pill ok">Works</span></td><td>Tested with a five-language stream</td></tr>
-          <tr><td>VP9, AV1, Dolby Vision, HDR10, E-AC-3/AC-3/Opus, live DASH, several periods and keys, adaptive quality</td><td><span class="pill warn">Built</span></td><td>Checked on a PC with public streams, not yet on the TV. The multi-period test stream's licence server refuses its published token</td></tr>
+          <tr><td>AV1, VP9, HEVC HDR10 (with mastering metadata), E-AC-3 7.1, AC-3 5.1, Opus, live DASH, several periods, adaptive quality</td><td><span class="pill ok">Works</span></td><td>Seen on the TV with clear public streams and with test streams made locally with ffmpeg, through the same player</td></tr>
+          <tr><td>Dolby Vision, key rotation, several keys across periods</td><td><span class="pill warn">Built</span></td><td>Checked on a PC only. The multi-period test stream's licence server refuses its published token</td></tr>
           <tr><td>In-stream subtitles, HLS</td><td><span class="pill no">Not supported</span></td><td>No subtitle renderer on this route; apps can use Flutter's caption support</td></tr>
           <tr><td>webOS&nbsp;3 to 5, 7 and later</td><td><span class="pill no">Untested</span></td><td>The same player library exists on webOS&nbsp;3 to 26</td></tr>
         </tbody>
