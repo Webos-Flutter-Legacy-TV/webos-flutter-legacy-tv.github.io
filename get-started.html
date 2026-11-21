@@ -70,7 +70,8 @@ flutter-webos build webos --release --legacy</code></pre>
       <li id="configure">
         <h3>Configure</h3>
         <p>Turn on Impeller: add <code>"engine-switches"</code> to <code>webos/meta/flutter-conf.json</code>, keeping the keys
-          <code>flutter-webos create</code> put there. Impeller is up to three times faster than Skia on the webOS 6 GPU.</p>
+          <code>flutter-webos create</code> put there, and add an empty <code>webos/meta/compat-dual-surface</code> file.
+          Together they halve the GPU time per frame on webOS 6 (<a href="compatibility.html#performance">measurements</a>).</p>
 <pre><code>{
   "FLUTTER_HOME": "",
   "FLUTTER_TEMP_HOME": ".cache",
@@ -87,7 +88,7 @@ flutter-webos build webos --release --legacy</code></pre>
           <thead><tr><th>File</th><th>Effect</th></tr></thead>
           <tbody>
             <tr><td><code>compat-widevine-l1</code></td><td>Widevine at the hardware security level through the TV's own CDM and player. Research only, not for published apps: see <a href="drm.html">DRM progress</a></td></tr>
-            <tr><td><code>compat-dual-surface</code></td><td>Faster frames; off automatically while media or an external texture is in use (see <a href="compatibility.html#performance">performance</a>)</td></tr>
+            <tr><td><code>compat-dual-surface</code></td><td>Faster frames, recommended; off automatically while media or an external texture is in use (see <a href="compatibility.html#performance">performance</a>)</td></tr>
             <tr><td><code>compat-back-as-key</code></td><td>Deliver Back as a key event instead of a route pop</td></tr>
             <tr><td><code>compat-log-*</code></td><td>Debug output in <code>compat.log</code> (see <a href="development.html#logs">logs</a>)</td></tr>
           </tbody>

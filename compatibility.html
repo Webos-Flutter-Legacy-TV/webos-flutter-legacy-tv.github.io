@@ -56,7 +56,7 @@
           <tr><td>Remote: D-pad, OK</td><td><span class="pill ok">Works</span></td><td></td></tr>
           <tr><td>Remote: Back</td><td><span class="pill ok">Works</span></td><td>Pops the current route; on the last route the app exits</td></tr>
           <tr><td>DNS, HTTP, HTTPS</td><td><span class="pill ok">Works</span></td><td>Certificate verification on</td></tr>
-          <tr><td>path_provider, shared_preferences, sqflite</td><td><span class="pill ok">Works</span></td><td>Data survives reinstall</td></tr>
+          <tr><td>path_provider, shared_preferences, sqflite</td><td><span class="pill ok">Works</span></td><td>Data survives reinstall. <code>getApplicationCacheDirectory()</code> throws in LG's path_provider (fixed in the plugins fork's next release); use <code>getApplicationSupportDirectory()</code> until then</td></tr>
           <tr><td>video_player</td><td><span class="pill ok">Works</span></td><td>Play, pause, seek, 2&times;, resized window, Home and resume. Two players both play, but only the newest is visible (one video plane). Use the plugins fork</td></tr>
           <tr><td>video_player_drm</td><td><span class="pill ok">Works</span></td><td>Clear HLS/DASH and PlayReady. Widevine with the opt-in, experimental hardware route (L1, up to 4K). See <a href="drm.html">DRM progress</a></td></tr>
           <tr><td>audioplayers</td><td><span class="pill ok">Works</span></td><td>Network MP3</td></tr>
@@ -92,9 +92,27 @@
         (<a href="get-started.html#configure">full file</a>):</p>
 <pre><code>"engine-switches": { "enable-impeller": true }</code></pre>
         <p>Recommended, including for apps that use video_player with the plugins fork.</p></div>
-      <div class="card"><h3>Dual surface (opt-in)</h3><p>An empty <code>webos/meta/compat-dual-surface</code> file alternates two EGL surfaces, so rendering no longer waits about 10&nbsp;ms
+      <div class="card"><h3>Dual surface</h3><p>An empty <code>webos/meta/compat-dual-surface</code> file alternates two EGL surfaces, so rendering no longer waits about 10&nbsp;ms
         per frame for the Mali driver. Raster time drops from about 17&nbsp;ms to 7&nbsp;ms.</p>
         <p style="margin-top:8px">It switches itself off while video or audio is loaded, or while an external texture (such as a <code>webos_image_texture</code> image) is registered: with Impeller those don't draw on the second surface.</p></div>
+    </div>
+
+    <h3 style="margin-top:34px">In a real app</h3>
+    <p class="sub">A Jellyfin client on webOS 6.5.3, with the same remote-key scenario each time (down the rows, along them, back up). <em>Raster</em> is the GPU's time per frame; a frame has 16.7&nbsp;ms at 60&nbsp;fps. Building the frame in Dart took about 2&nbsp;ms in every case, so the GPU decides the speed.</p>
+    <div class="table">
+      <table>
+        <thead><tr><th>Setup</th><th class="num">Raster per frame</th><th class="num">Frames over 20&nbsp;ms</th></tr></thead>
+        <tbody>
+          <tr><td>Skia (LG's default)</td><td class="num">17.5&nbsp;ms</td><td class="num">22%</td></tr>
+          <tr><td>Impeller + dual surface</td><td class="num">10.0&nbsp;ms</td><td class="num">5.4%</td></tr>
+          <tr><td>Impeller + dual surface, no blurred shadow under each card</td><td class="num">8.8&nbsp;ms</td><td class="num">2.6%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:12px">The Movies grid (21 posters on screen) went from 34&nbsp;ms per frame, about 29&nbsp;fps, to 12.4&nbsp;ms. Impeller alone was <em>not</em> faster in this app: its frames landed just over budget until dual surface removed the driver wait. Damage regions (partial redraw) made no difference. Start-up (first frame 0.7&ndash;0.8&nbsp;s) and remote input (20&ndash;30&nbsp;ms to the drawn frame) were fine throughout.</p>
+    <div class="grid two" style="margin-top:22px">
+      <div class="card"><h3>Make frames cheaper</h3><p>On these GPUs avoid blurred <code>BoxShadow</code>s on many widgets, <code>BackdropFilter</code>, and full-screen translucent layers; size images to how they are shown (<code>cacheWidth</code>, server-side resizing). A focus ring with <code>spreadRadius</code> and no blur is cheap.</p></div>
+      <div class="card"><h3>Measure your app <span class="pill warn">Next release</span></h3><p>A <code>legacy_perf_probe</code> package will log build and raster time per slow frame, key-to-frame time and image loads to <code>compat.log</code>, in builds with <code>--dart-define=LEGACY_PERF_PROBE=true</code>, with a guide in <code>docs/PERFORMANCE.md</code>. Legacy packages will also turn on Impeller and dual surface by default.</p></div>
     </div>
   </div>
 </section>
@@ -111,7 +129,7 @@
           <tr><td>Package</td><td>LG's IPK</td><td><span class="pill ok">Same app</span> About 15&nbsp;MB larger (glibc, C++ runtime, shims)</td></tr>
           <tr><td>UI, network, storage, most plugins</td><td>Works</td><td><span class="pill ok">Same</span> Four plugins need the fork: video_player, video_player_drm, flutter_secure_storage, webos_service_bridge</td></tr>
           <tr><td>Back key</td><td>Handled by the embedder</td><td><span class="pill ok">Works</span> Arrives as a route pop, like Android; <code>Navigator</code> and <code>PopScope</code> work as usual</td></tr>
-          <tr><td>Frame rate</td><td>Not measured</td><td><span class="pill warn">Slower</span> 50&ndash;60&nbsp;fps for light UI with Impeller; large shadows, blurs and opacity are slow</td></tr>
+          <tr><td>Frame rate</td><td>Not measured</td><td><span class="pill warn">Slower</span> 50&ndash;60&nbsp;fps for light UI with Impeller and dual surface; blurred shadows, blurs and large translucent layers are slow</td></tr>
           <tr><td>Secure storage</td><td>Hardware-backed key service</td><td><span class="pill warn">Fallback</span> AES-GCM with a key in the app's folder: safe from other apps, not from root</td></tr>
           <tr><td>Video</td><td>Media server, exported windows</td><td><span class="pill warn">Limits</span> One visible video at a time; resumes 4&ndash;7&nbsp;s after a seek</td></tr>
           <tr><td>PlayReady</td><td>Licence URL</td><td><span class="pill ok">Works</span> Translated to the older DRM service</td></tr>
