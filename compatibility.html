@@ -56,7 +56,7 @@
           <tr><td>Remote: D-pad, OK</td><td><span class="pill ok">Works</span></td><td></td></tr>
           <tr><td>Remote: Back</td><td><span class="pill ok">Works</span></td><td>Pops the current route; on the last route the app exits</td></tr>
           <tr><td>DNS, HTTP, HTTPS</td><td><span class="pill ok">Works</span></td><td>Certificate verification on</td></tr>
-          <tr><td>path_provider, shared_preferences, sqflite</td><td><span class="pill ok">Works</span></td><td>Data survives reinstall. <code>getApplicationCacheDirectory()</code> throws in LG's path_provider (fixed in the plugins fork's next release); use <code>getApplicationSupportDirectory()</code> until then</td></tr>
+          <tr><td>path_provider, shared_preferences, sqflite</td><td><span class="pill ok">Works</span></td><td>Data survives reinstall. <code>getApplicationCacheDirectory()</code> needs the plugins fork (legacy-v0.2.0); LG's version throws</td></tr>
           <tr><td>video_player</td><td><span class="pill ok">Works</span></td><td>Play, pause, seek, 2&times;, resized window, Home and resume. Two players both play, but only the newest is visible (one video plane). Use the plugins fork</td></tr>
           <tr><td>video_player_drm</td><td><span class="pill ok">Works</span></td><td>Clear HLS/DASH and PlayReady. Widevine with the opt-in, experimental hardware route (L1, up to 4K). See <a href="drm.html">DRM progress</a></td></tr>
           <tr><td>audioplayers</td><td><span class="pill ok">Works</span></td><td>Network MP3</td></tr>
@@ -88,12 +88,10 @@
       </table>
     </div>
     <div class="grid two" style="margin-top:22px">
-      <div class="card"><h3>Turn on Impeller</h3><p>Add this key to <code>webos/meta/flutter-conf.json</code>, next to the keys already there
-        (<a href="get-started.html#configure">full file</a>):</p>
-<pre><code>"engine-switches": { "enable-impeller": true }</code></pre>
-        <p>Recommended, including for apps that use video_player with the plugins fork.</p></div>
-      <div class="card"><h3>Dual surface</h3><p>An empty <code>webos/meta/compat-dual-surface</code> file alternates two EGL surfaces, so rendering no longer waits about 10&nbsp;ms
-        per frame for the Mali driver. Raster time drops from about 17&nbsp;ms to 7&nbsp;ms.</p>
+      <div class="card"><h3>Impeller (default)</h3><p>Legacy packages turn on Impeller unless the app sets <code>"enable-impeller"</code> in <code>webos/meta/flutter-conf.json</code>
+        (<a href="get-started.html#configure">how to opt out</a>). Apps with video need the plugins fork (legacy-v0.2.0), which keeps a moved or resized video visible.</p></div>
+      <div class="card"><h3>Dual surface (default)</h3><p>Legacy packages alternate two EGL surfaces, so rendering no longer waits about 10&nbsp;ms
+        per frame for the Mali driver: raster time drops from about 17&nbsp;ms to 7&nbsp;ms. An empty <code>webos/meta/compat-single-surface</code> turns it off.</p>
         <p style="margin-top:8px">It switches itself off while video or audio is loaded, or while an external texture (such as a <code>webos_image_texture</code> image) is registered: with Impeller those don't draw on the second surface.</p></div>
     </div>
 
@@ -112,7 +110,7 @@
     <p style="margin-top:12px">The Movies grid (21 posters on screen) went from 34&nbsp;ms per frame, about 29&nbsp;fps, to 12.4&nbsp;ms. Impeller alone was <em>not</em> faster in this app: its frames landed just over budget until dual surface removed the driver wait. Damage regions (partial redraw) made no difference. Start-up (first frame 0.7&ndash;0.8&nbsp;s) and remote input (20&ndash;30&nbsp;ms to the drawn frame) were fine throughout.</p>
     <div class="grid two" style="margin-top:22px">
       <div class="card"><h3>Make frames cheaper</h3><p>On these GPUs avoid blurred <code>BoxShadow</code>s on many widgets, <code>BackdropFilter</code>, and full-screen translucent layers; size images to how they are shown (<code>cacheWidth</code>, server-side resizing). A focus ring with <code>spreadRadius</code> and no blur is cheap.</p></div>
-      <div class="card"><h3>Measure your app <span class="pill warn">Next release</span></h3><p>A <code>legacy_perf_probe</code> package will log build and raster time per slow frame, key-to-frame time and image loads to <code>compat.log</code>, in builds with <code>--dart-define=LEGACY_PERF_PROBE=true</code>, with a guide in <code>docs/PERFORMANCE.md</code>. Legacy packages will also turn on Impeller and dual surface by default.</p></div>
+      <div class="card"><h3>Measure your app</h3><p>The <code>legacy_perf_probe</code> package logs build and raster time per slow frame, key-to-frame time and image loads to <code>compat.log</code>, in builds with <code>--dart-define=LEGACY_PERF_PROBE=true</code>. See the <a href="https://github.com/Webos-Flutter-Legacy-TV/flutter-webos/blob/main/legacy-webos/docs/PERFORMANCE.md">performance guide</a>.</p></div>
     </div>
   </div>
 </section>

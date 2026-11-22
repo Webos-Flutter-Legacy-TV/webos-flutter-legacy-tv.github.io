@@ -69,26 +69,17 @@ flutter-webos build webos --release --legacy</code></pre>
       </li>
       <li id="configure">
         <h3>Configure</h3>
-        <p>Turn on Impeller: add <code>"engine-switches"</code> to <code>webos/meta/flutter-conf.json</code>, keeping the keys
-          <code>flutter-webos create</code> put there, and add an empty <code>webos/meta/compat-dual-surface</code> file.
-          Together they halve the GPU time per frame on webOS 6 (<a href="compatibility.html#performance">measurements</a>).</p>
-<pre><code>{
-  "FLUTTER_HOME": "",
-  "FLUTTER_TEMP_HOME": ".cache",
-  "FLUTTER_APPDATA_HOME": ".data",
-  "FLUTTER_DOWNLOAD_HOME": ".download",
-  "FLUTTER_EXT_STORAGE_PATH": "",
-  "FLUTTER_APP_LOG_PATH": "log",
-  "engine-switches": {
-    "enable-impeller": true
-  }
-}</code></pre>
+        <p>The renderer needs no setup: since legacy-v0.2.0, legacy packages use Impeller with two window surfaces, which halves
+          the GPU time per frame on webOS 6 (<a href="compatibility.html#performance">measurements</a>). The build prints
+          <code>renderer: ...</code> lines saying what it chose. To keep LG's Skia renderer instead, add this to
+          <code>webos/meta/flutter-conf.json</code>, keeping the keys <code>flutter-webos create</code> put there:</p>
+<pre><code>"engine-switches": { "enable-impeller": false }</code></pre>
         <p>Optional switches, each an empty file in <code>webos/meta/</code>:</p>
         <div class="table"><table>
           <thead><tr><th>File</th><th>Effect</th></tr></thead>
           <tbody>
             <tr><td><code>compat-widevine-l1</code></td><td>Widevine at the hardware security level through the TV's own CDM and player. Research only, not for published apps: see <a href="drm.html">DRM progress</a></td></tr>
-            <tr><td><code>compat-dual-surface</code></td><td>Faster frames, recommended; off automatically while media or an external texture is in use (see <a href="compatibility.html#performance">performance</a>)</td></tr>
+            <tr><td><code>compat-single-surface</code></td><td>Turn off the second window surface the legacy package adds by default (it removes a ~10&nbsp;ms driver wait per frame, and switches itself off while media or an external texture is in use; see <a href="compatibility.html#performance">performance</a>)</td></tr>
             <tr><td><code>compat-back-as-key</code></td><td>Deliver Back as a key event instead of a route pop</td></tr>
             <tr><td><code>compat-log-*</code></td><td>Debug output in <code>compat.log</code> (see <a href="development.html#logs">logs</a>)</td></tr>
           </tbody>
@@ -104,7 +95,7 @@ flutter-webos build webos --release --legacy</code></pre>
   video_player_webos:                   <span class="c"># its webOS implementation, from the fork</span>
     git:
       url: https://github.com/Webos-Flutter-Legacy-TV/plugins.git
-      ref: legacy-v0.1.0
+      ref: legacy-v0.2.0
       path: packages/video_player</code></pre>
         <p>Your code keeps <code>import 'package:video_player/video_player.dart';</code>. Each package's folder name and package name
           are listed in the plugins repo's <code>doc/plugin-list.md</code>; the fork's fixes are in these:</p>
@@ -112,7 +103,8 @@ flutter-webos build webos --release --legacy</code></pre>
           <thead><tr><th>Plugin</th><th>Why the fork</th></tr></thead>
           <tbody>
             <tr><td>video_player</td><td>Looping, lifecycle events, volume; keeps a moved or resized video visible</td></tr>
-            <tr><td>video_player_drm</td><td>Stops position polling once the player is gone</td></tr>
+            <tr><td>video_player_drm</td><td>Stops position polling once the player is gone; keeps a video resized after it starts visible with Impeller</td></tr>
+            <tr><td>path_provider</td><td><code>getApplicationCacheDirectory()</code> works (LG's version throws)</td></tr>
             <tr><td>audioplayers_soloud</td><td>Resume after completion; seek never hangs</td></tr>
             <tr><td>flutter_secure_storage</td><td>webOS 6 has no usable key service; encrypts in the app sandbox</td></tr>
             <tr><td>webos_service_bridge</td><td>Subscription cancel errors</td></tr>
